@@ -73,7 +73,7 @@
     (if (not (= posy (- n-lin 1)))
     (check-bottom tabuleiro posx posy)) ; Ve se bloco em baixo é da mesma cor
  
-   (print teste)
+   
     
     
     (if (not (= posx (- n-col 1))) ; Avança no Y caso não esteja no final da linha

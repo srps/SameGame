@@ -42,38 +42,60 @@
   n-pecas	              ; Peças por eliminar
   n-blocos	              ; Blocos por eliminar         
   tabuleiro
-  lista-blocos                ; Lista dos blocos existentes		
+  h-blocos                    ; Hash com os blocos existentes		
 )
 
 ; Funcao principal. Ponto de Entrada
 
 
-(defun check-right (tabuleiro posx posy)
+(defun ve-frente (tabuleiro posx posy)
    (if (= (nth (+ posx 1) (nth posy tabuleiro)) (nth posx (nth posy tabuleiro))) ; Se o da frente for igual
-             (format t "Right Match On: posx: ~D posy: ~D ~% " posx posy) )
+       (format t "Right Match On: posx: ~D posy: ~D ~% " posx posy))
 )
 
-(defun check-bottom (tabuleiro posx posy)
-  (if  (= (nth posx (nth posy tabuleiro)) (nth posx (nth (+ 1 posy) tabuleiro))) ; Se o de baixo for igual
+(defun ve-abaixo (tabuleiro posx posy)
+  (if (= (nth posx (nth posy tabuleiro)) (nth posx (nth (+ 1 posy) tabuleiro))) ; Se o de baixo for igual
       (format t  "Bottom Match On: posx: ~D posy: ~D ~% " posx posy))
 )
 
+(defun cria-tabuleiro (tabuleiro n-lin n-col)
+  (let* ((resul (list))
+         (posx 0)
+         (posy 0)
+         (l-aux (list)))
+    (loop for linha in tabuleiro do
+          (loop for coluna in linha do
+                (setq peca (make-peca :pos (cons posx posy) :cor coluna :bloco NIL))
+                (setq l-aux (append l-aux (list peca)))
+                ;(print first l-aux)
+                (if (not (= posx (- n-col 1))) ; Avança no Y caso não esteja no final da linha
+                    (incf posx)               
+                  (progn                       ; Se estiver no Final, desce 1 linha e faz reset no posx
+                    (setq resul (append resul (list l-aux)))
+                    (setq l-aux '())
+                    (setf posx 0)          
+                (incf posy)))))
+                resul))
+                      
+
 (defun lista-blocos (tabuleiro n-lin n-col hash)
   (let* ((resul (list '()))
-        (posx 0)
-        (posy 0)
-        (contador 0))
+         (posx 0)
+         (posy 0)
+         (contador 0))
     (loop for linha in tabuleiro do
-     (loop for coluna in linha do
-    (setq bloco (make-bloco :cor (nth posx (nth posy tabuleiro)) :lista-pecas (list posx posy)))
-    (print linha)
-    (print coluna)
-    (if (not (= posx (- n-col 1)))
-    (check-right tabuleiro posx posy)) ; Ve se bloco à direita é da mesma cor
-    (if (not (= posy (- n-lin 1)))
-    (check-bottom tabuleiro posx posy)) ; Ve se bloco em baixo é da mesma cor
+          (loop for coluna in linha do
+                (setq peca (make-peca :pos (cons posx posy) :cor coluna :bloco contador))
+                (setq bloco (make-bloco :cor coluna :lista-pecas (list peca) :id contador))
+                (incf contador)
+                (print linha)
+                (print coluna)
+                (if (not (= posx (- n-col 1)))
+                    (ve-frente tabuleiro posx posy)) ; Ve se bloco à direita é da mesma cor
+                (if (not (= posy (- n-lin 1)))
+                    (ve-abaixo tabuleiro posx posy)) ; Ve se bloco em baixo é da mesma cor
  
-   
+   (print teste)
     
     
     (if (not (= posx (- n-col 1))) ; Avança no Y caso não esteja no final da linha
@@ -86,14 +108,15 @@
 ))
 
 (defun resolve-same-game (problema algoritmo)
-  (let* ((hash-blocos (lista-blocos problema (list-length problema) (list-length (first problema)) (make-hash-table)))
-         (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (list-length blocos) :tabuleiro problema :l-blocos hash-blocos))
+  (let* ((tab (cria-tabuleiro problema (list-length problema) (list-length (first problema))))
+         (h-blocos (lista-blocos problema (list-length problema) (list-length (first problema)) (make-hash-table)))
+         (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (list-length h-blocos) :tabuleiro problema :l-blocos h-blocos))
         ; (gera-sucessores	#'sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
         ; (heuristica-opt	#'heur-menor-altura)
          resul solucao)
-  (print "yay"))
+  (print tab))
 )
 
 

@@ -48,13 +48,13 @@
 ; Funcao principal. Ponto de Entrada
 
 
-(defun ve-frente (tabuleiro posx posy)
-   (if (= (nth (+ posx 1) (nth posy tabuleiro)) (nth posx (nth posy tabuleiro))) ; Se o da frente for igual
+(defun ve-frente (tabuleiro coluna posx posy)
+   (if (= coluna (nth (+ posx 1) (nth posy tabuleiro))) ; Se o da frente for igual
        (format t "Right Match On: posx: ~D posy: ~D ~% " posx posy))
 )
 
-(defun ve-abaixo (tabuleiro posx posy)
-  (if (= (nth posx (nth posy tabuleiro)) (nth posx (nth (+ 1 posy) tabuleiro))) ; Se o de baixo for igual
+(defun ve-abaixo (tabuleiro coluna posx posy)
+  (if (= coluna (nth posx (nth (+ 1 posy) tabuleiro))) ; Se o de baixo for igual
       (format t  "Bottom Match On: posx: ~D posy: ~D ~% " posx posy))
 )
 
@@ -67,7 +67,6 @@
           (loop for coluna in linha do
                 (setq peca (make-peca :pos (cons posx posy) :cor coluna :bloco NIL))
                 (setq l-aux (append l-aux (list peca)))
-                ;(print first l-aux)
                 (if (not (= posx (- n-col 1))) ; Avança no Y caso não esteja no final da linha
                     (incf posx)               
                   (progn                       ; Se estiver no Final, desce 1 linha e faz reset no posx
@@ -88,14 +87,10 @@
                 (setq peca (make-peca :pos (cons posx posy) :cor coluna :bloco contador))
                 (setq bloco (make-bloco :cor coluna :lista-pecas (list peca) :id contador))
                 (incf contador)
-                (print linha)
-                (print coluna)
                 (if (not (= posx (- n-col 1)))
-                    (ve-frente tabuleiro posx posy)) ; Ve se bloco à direita é da mesma cor
+                    (ve-frente tabuleiro coluna posx posy)) ; Ve se bloco à direita é da mesma cor
                 (if (not (= posy (- n-lin 1)))
-                    (ve-abaixo tabuleiro posx posy)) ; Ve se bloco em baixo é da mesma cor
- 
-   (print teste)
+                    (ve-abaixo tabuleiro coluna posx posy)) ; Ve se bloco em baixo é da mesma cor
     
     
     (if (not (= posx (- n-col 1))) ; Avança no Y caso não esteja no final da linha

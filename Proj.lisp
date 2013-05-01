@@ -57,7 +57,8 @@
        (setf (peca-bloco p-dir) (peca-bloco p-aux))
        (setf (nth posy (nth (+ posx 1) tabuleiro)) p-dir)
        (setq l-aux (append l-aux (list p-dir)))
-       (setf (bloco-lista-pecas (gethash (peca-bloco (nth posx (nth posy tabuleiro))) hash)) l-aux)))))
+       (setf (bloco-lista-pecas (gethash (peca-bloco (nth posy (nth posx tabuleiro))) hash)) l-aux)
+))))
 
 (defun ve-abaixo (tabuleiro p-aux b-aux posx posy hash)
   (let* ((l-aux (bloco-lista-pecas b-aux))
@@ -96,24 +97,35 @@
          (b-aux (make-bloco)))
     (loop for posy from y-ini to y-fin do
           (loop for posx from x-ini to x-fin do
+                (print "1")
                 (setq p-aux (nth posy (nth posx tabuleiro)))
-                (if (= p-aux-bloco NIL)
-                    (progn                      
+                (print "3")
+                (print p-aux)
+                (print (not (peca-bloco p-aux)))
+                 
+                (if (not (peca-bloco p-aux))
+                    (progn  
+                       (print "4")
                       (setf (peca-bloco p-aux) contador)
+                      (print "4")
                       (setq b-aux (make-bloco :cor p-aux-cor :lista-pecas (list p-aux) :id contador))
+                       (print "5")
                       (setf (nth posy (nth posx tabuleiro)) p-aux) 
+                       (print "6")
                       (incf contador))
                     (setf b-aux (gethash (peca-bloco p-aux) resul)))
+                (print "2")
                 (if (not (= posx (- n-col 1)))
                     (ve-frente tabuleiro p-aux b-aux posx posy resul)) ; Ve se bloco à direita é da mesma cor
                 (if (not (= posy (- n-lin 1)))
-                    (ve-abaixo tabuleiro p-aux b-aux posx posy resul)))) ; Ve se bloco em baixo é da mesma cor    
+                    (ve-abaixo tabuleiro p-aux b-aux posx posy resul)))) ; Ve se bloco em baixo é da mesma cor   
+    (print "COF")
     (print tabuleiro)
     resul))
 
 (defun resolve-same-game (problema algoritmo)
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
-         (h-blocos (lista-blocos problema 0 (list-length problema) 0 (list-length (first problema)) (list-length problema) (list-length (first problema)) (make-hash-table)))
+         (h-blocos (lista-blocos tab 0 (list-length problema) 0 (list-length (first problema)) (list-length problema) (list-length (first problema)) (make-hash-table)))
          (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (list-length h-blocos) :tabuleiro tab :l-blocos h-blocos))
         ; (gera-sucessores	#'sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
@@ -124,7 +136,7 @@
 )
 
 
-(print (resolve-same-game '((1 2 2 10 8) (1 2 2 1 3) (1 2 2 2 2) (1 1 1 1 1))
+(print (resolve-same-game '((1 1 2 10 8) (1 2 2 1 3) (1 2 2 2 2) (1 1 1 1 1))
  "melhor.abordagem.optimizacao"))
 
 

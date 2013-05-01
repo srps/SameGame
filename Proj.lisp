@@ -48,17 +48,29 @@
 ; Funcao principal. Ponto de Entrada
 
 
-(defun ve-frente (tabuleiro coluna posx posy)
-   (if (= coluna (nth (+ posx 1) (nth posy tabuleiro))) ; Se o da frente for igual
-       (format t "Right Match On: posx: ~D posy: ~D ~% " posx posy))
-)
+(defun ve-frente (tabuleiro p-aux b-aux posx posy hash)
+  (let* ((l-aux (bloco-lista-pecas b-aux))
+         (p-dir (nth (+ posx 1) (nth posy tabuleiro))))
+  (if (= (peca-cor p-aux) (peca-cor p-dir)) ; Se o da frente for igual
+       (progn
+       (format t "Right Match On: posx: ~D posy: ~D ~% " posx posy)
+       (setf (peca-bloco p-dir) (peca-bloco p-aux))
+       (setf (nth posy (nth (+ posx 1) tabuleiro)) p-dir)
+       (setq l-aux (append l-aux (list p-dir)))
+       (setf (bloco-lista-pecas (gethash (peca-bloco (nth posx (nth posy tabuleiro))) hash)) l-aux)))))
 
-(defun ve-abaixo (tabuleiro coluna posx posy)
-  (if (= coluna (nth posx (nth (+ 1 posy) tabuleiro))) ; Se o de baixo for igual
-      (format t  "Bottom Match On: posx: ~D posy: ~D ~% " posx posy))
-)
+(defun ve-abaixo (tabuleiro p-aux b-aux posx posy hash)
+  (let* ((l-aux (bloco-lista-pecas b-aux))
+         (p-baixo (nth posx (nth (+ posy 1) tabuleiro))))
+  (if (= (peca-cor p-aux) (peca-cor p-baixo)) ; Se o da frente for igual
+       (progn
+       (format t "Down Match On: posx: ~D posy: ~D ~% " posx posy)
+       (setf (peca-bloco p-baixo) (peca-bloco p-aux))
+       (setf (nth (+ posy 1) (nth posx tabuleiro)) p-baixo)
+       (setq l-aux (append l-aux (list p-baixo)))
+       (setf (bloco-lista-pecas (gethash (peca-bloco (nth posx (nth posy tabuleiro))) hash)) l-aux)))))
 
-(defun cria-tabuleiro (tabuleiro n-lin n-col)
+(defun cria-tabuleiro (tabuleiro n-col)
   (let* ((resul (list))
          (posx 0)
          (posy 0)
@@ -71,41 +83,38 @@
                     (incf posx)               
                   (progn                       ; Se estiver no Final, desce 1 linha e faz reset no posx
                     (setq resul (append resul (list l-aux)))
-                    (setq l-aux '())
+                    (setq l-aux (list))
                     (setf posx 0)          
                 (incf posy)))))
                 resul))
                       
 
-(defun lista-blocos (tabuleiro n-lin n-col hash)
-  (let* ((resul (list '()))
-         (posx 0)
-         (posy 0)
-         (contador 0))
-    (loop for linha in tabuleiro do
-          (loop for coluna in linha do
-                (setq peca (make-peca :pos (cons posx posy) :cor coluna :bloco contador))
-                (setq bloco (make-bloco :cor coluna :lista-pecas (list peca) :id contador))
-                (incf contador)
+(defun lista-blocos (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col hash)
+  (let* ((resul hash)
+         (contador 0)
+         (p-aux (make-peca))
+         (b-aux (make-bloco)))
+    (loop for posy from y-ini to y-fin do
+          (loop for posx from x-ini to x-fin do
+                (setq p-aux (nth posy (nth posx tabuleiro)))
+                (if (= p-aux-bloco NIL)
+                    (progn                      
+                      (setf (peca-bloco p-aux) contador)
+                      (setq b-aux (make-bloco :cor p-aux-cor :lista-pecas (list p-aux) :id contador))
+                      (setf (nth posy (nth posx tabuleiro)) p-aux) 
+                      (incf contador))
+                    (setf b-aux (gethash (peca-bloco p-aux) resul)))
                 (if (not (= posx (- n-col 1)))
-                    (ve-frente tabuleiro coluna posx posy)) ; Ve se bloco à direita é da mesma cor
+                    (ve-frente tabuleiro p-aux b-aux posx posy resul)) ; Ve se bloco à direita é da mesma cor
                 (if (not (= posy (- n-lin 1)))
-                    (ve-abaixo tabuleiro coluna posx posy)) ; Ve se bloco em baixo é da mesma cor
-    
-    
-    (if (not (= posx (- n-col 1))) ; Avança no Y caso não esteja no final da linha
-      (incf posx)               
-      (progn                       ; Se estiver no Final, desce 1 linha e faz reset no posx
-        (setf posx 0)          
-        (incf posy)))
-    ))
+                    (ve-abaixo tabuleiro p-aux b-aux posx posy resul)))) ; Ve se bloco em baixo é da mesma cor    
     (print tabuleiro)
-))
+    resul))
 
 (defun resolve-same-game (problema algoritmo)
-  (let* ((tab (cria-tabuleiro problema (list-length problema) (list-length (first problema))))
-         (h-blocos (lista-blocos problema (list-length problema) (list-length (first problema)) (make-hash-table)))
-         (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (list-length h-blocos) :tabuleiro problema :l-blocos h-blocos))
+  (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
+         (h-blocos (lista-blocos problema 0 (list-length problema) 0 (list-length (first problema)) (list-length problema) (list-length (first problema)) (make-hash-table)))
+         (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (list-length h-blocos) :tabuleiro tab :l-blocos h-blocos))
         ; (gera-sucessores	#'sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)

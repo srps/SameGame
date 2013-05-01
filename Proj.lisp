@@ -55,8 +55,9 @@
        (progn
        (format t "Right Match On: posx: ~D posy: ~D ~% " posx posy)
        (setf (peca-bloco p-dir) (peca-bloco p-aux))
-       (setf (nth posy (nth (+ posx 1) tabuleiro)) p-dir)
+       (setf (nth (+ posx 1) (nth posy tabuleiro)) p-dir)
        (setq l-aux (append l-aux (list p-dir)))
+       (print (gethash 0 hash))
        (setf (bloco-lista-pecas (gethash (peca-bloco (nth posy (nth posx tabuleiro))) hash)) l-aux)
 ))))
 
@@ -67,9 +68,10 @@
        (progn
        (format t "Down Match On: posx: ~D posy: ~D ~% " posx posy)
        (setf (peca-bloco p-baixo) (peca-bloco p-aux))
-       (setf (nth (+ posy 1) (nth posx tabuleiro)) p-baixo)
+       (setf (nth posx (nth (+ posy 1) tabuleiro)) p-baixo)
        (setq l-aux (append l-aux (list p-baixo)))
-       (setf (bloco-lista-pecas (gethash (peca-bloco (nth posx (nth posy tabuleiro))) hash)) l-aux)))))
+       (print (gethash 0 hash))
+       (setf (bloco-lista-pecas (gethash (peca-bloco (nth posy (nth posx tabuleiro))) hash)) l-aux)))))
 
 (defun cria-tabuleiro (tabuleiro n-col)
   (let* ((resul (list))
@@ -110,6 +112,7 @@
                       (print "4")
                       (setq b-aux (make-bloco :cor p-aux-cor :lista-pecas (list p-aux) :id contador))
                        (print "5")
+                       (setf (gethash (peca-bloco p-aux) resul) b-aux)
                       (setf (nth posy (nth posx tabuleiro)) p-aux) 
                        (print "6")
                       (incf contador))
@@ -136,7 +139,7 @@
 )
 
 
-(print (resolve-same-game '((1 1 2 10 8) (1 2 2 1 3) (1 2 2 2 2) (1 1 1 1 1))
+(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 2 2) (1 1 1 1 1))
  "melhor.abordagem.optimizacao"))
 
 

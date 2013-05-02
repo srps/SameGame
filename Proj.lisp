@@ -77,12 +77,33 @@
 ;;	FUNÇÔES AUXILIARES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Função que junta 2 blocos da mesma cor
+;-------------------------------------------------------------;
+; Função que remove bloco do tabuleiro e atualiza a pontuação ;
+;-------------------------------------------------------------;
+; ARG1 - Estado (nó)                                          ;
+; ARG2 - Bloco a ser removido                                 ;
+; ARG3 - Hash table                                           ;
+;-------------------------------------------------------------;
+
+(defun remove-bloco (estado bloco ht)
+  (let* ((l-aux (bloco-lista-pecas (gethash bloco ht)))
+         (pontos (expt (- (list-length l-aux) 2) 2))
+         (pos))
+    (remhash bloco ht)
+    (setf (no-pontuacao estado) (+ (no-pontuacao estado) pontos))
+    (loop for p-aux in l-aux do
+          (setq pos (peca-pos p-aux))
+          (setf (nth (car pos) (nth (cdr pos) (no-tabuleiro estado))) NIL))))
+
+
+;----------------------------------------;
+; Função que junta 2 blocos da mesma cor ;
 ; ---------------------------------------;
-; ARG1 - tabuleiro com as peças
-; ARG2 - hashtable dos blocos
-; ARG3 - chave do bloco a manter
-; ARG4 - chave do bloco que desaparece
+; ARG1 - tabuleiro com as peças          ;
+; ARG2 - hashtable dos blocos            ;
+; ARG3 - chave do bloco a manter         ;
+; ARG4 - chave do bloco que desaparece   ;
+;----------------------------------------;
 
 (defun junta-blocos (tabuleiro ht chave-b1 chave-b2)
   (let* ((b-aux (gethash chave-b1 ht))                               ; Referência para o bloco que se vai manter
@@ -226,7 +247,7 @@
 (defun resolve-same-game (problema algoritmo)
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
          (h-blocos (lista-blocos-estado-inicial tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
-         (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :l-blocos h-blocos))
+         (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos))
         ; (gera-sucessores	#'sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
@@ -234,11 +255,13 @@
          resul solucao)
     (print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1)))
     (print-hash h-blocos)
+    (remove-bloco estado-inicial 0 h-blocos)
+    (print-hash h-blocos)
     estado-inicial)
 )
 
 
-(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 2 2) (1 1 1 1 1))
+(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 1 2) (1 1 1 1 1))
  "melhor.abordagem.optimizacao"))
 
 

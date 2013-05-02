@@ -45,6 +45,23 @@
   h-blocos                    ; Hash com os blocos existentes		
 )
 
+(defun junta-blocos (tabuleiro *ht* chave-b1 chave-b2)
+  (let* ((b-aux (bloco-cor (gethash chave-b1 *ht*)))                 ; Referência para o bloco que se vai manter
+         (l-aux (bloco-lista-pecas b-aux))         ; Lista das peças do bloco que se vai manter
+         (posx)
+         (posy))
+  (loop for p-aux in (bloco-lista-pecas (gethash chave-b2 *ht*)) do
+        (setq posx (car peca-pos p-aux))                             ; Guarda a coordenada x da peça a ser mudada
+        (setq posy (cdr peca-pos p-aux))                             ; Guarda a coordenada y da peça a ser mudada
+        (setf (peca-bloco p-aux) chave-b1)                           ; Muda o bloco da peça
+        (setq l-aux (append l-aux (list p-aux)))                     ; Insere a peça na lista do bloco original
+        (setf (nth posx (nth posy tabuleiro)) p-aux))                ; Re-insere a peça no tabuleiro
+  (setf (bloco-lista-pecas b-aux) l-aux)                             ; Coloca a nova lista no bloco original
+  (setf (gethash chave-b1 *ht*) b-aux)                               ; Atualiza o bloco original na HT
+  (remhash chave-b2 *ht*)))                                          ; Remove o 2º bloco da HT
+
+        
+
 ; Atribui ou junta blocos a partir da peça à direita no tabuleiro
 ; TODO: mudar nome da função, adicionar efeito dominó quando encontra uma peça da mesma cor com outro bloco associado
 

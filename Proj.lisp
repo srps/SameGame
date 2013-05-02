@@ -228,7 +228,7 @@
         ; (heuristica-opt	#'heur-menor-altura)
          resul solucao)
     (print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1)))
-    (print (print-hash h-blocos))
+    (print-hash h-blocos)
     estado-inicial)
 )
 

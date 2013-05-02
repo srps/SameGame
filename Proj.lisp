@@ -55,6 +55,33 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;	DEBUG
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun print-tabuleiro (tabuleiro n-lin n-col)
+  (let* ((result '())
+         (temp-list '()))
+    (loop for posy from 0 to n-lin do
+          (loop for posx from 0 to n-col do
+                (setq temp-list (append temp-list (list (peca-cor (nth posx (nth posy tabuleiro))))))
+                )
+          (setq result (append result (list temp-list)))
+          (setf temp-list '())
+           )
+  result)
+)
+
+(defun print-hash (hash)
+  (let* ((b-aux (make-bloco)))
+ (loop for key being the hash-keys of hash do
+       (setf b-aux (gethash key hash))
+       (format t "~% Key: ~D Cor Bloco: ~D Numero De Peças: ~D " key (bloco-cor b-aux) (list-length (bloco-lista-pecas b-aux)))
+       )
+ )
+)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	FUNÇÔES AUXILIARES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -200,7 +227,9 @@
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
         ; (heuristica-opt	#'heur-menor-altura)
          resul solucao)
-  estado-inicial)
+    (print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1)))
+    (print (print-hash h-blocos))
+    estado-inicial)
 )
 
 

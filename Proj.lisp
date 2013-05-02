@@ -251,17 +251,18 @@
          (chave-1 (peca-bloco p-aux))
          (chave-2 (peca-bloco p-dir)))
     (print "entrou: ve-frente")
-    (if (= (peca-cor p-aux) (peca-cor p-dir))                                       ; Se o da frente for igual
-        (if (or (not chave-2) (= chave-1 chave-2))
+    (if (= (peca-cor p-aux) (peca-cor p-dir))                                             ; Se o da frente for igual
+        (if (not chave-2)
             (progn
               (format t "Right Match On: posx: ~D posy: ~D ~% " posx posy)
               (setf (peca-bloco p-dir) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
               (setf (nth (+ posx 1) (nth posy tabuleiro)) p-dir)                      ; Coloca a peça atualizada no tabuleiro
               (setq l-aux (append l-aux (list p-dir)))                                ; Adiciona a peça à lista para atualizar o bloco
               (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) hash)) l-aux)      ; Atualiza o bloco na hash
-              (setf (bloco-x-max (gethash (peca-bloco p-dir) hash)) (+ posx 1))       ; Incrementa O xmax do bloco
-                     )     
-          (junta-blocos tabuleiro hash chave-1 chave-2)))))
+              (setf (bloco-x-max (gethash (peca-bloco p-dir) hash)) (+ posx 1)))      ; Incrementa O xmax do bloco     
+        (if (not (= chave-1 chave-2))
+            (junta-blocos tabuleiro hash chave-1 chave-2))))))
+
 
 ;----------------------------------------------------------------------;
 ; Função que verifica se a peça abaixo pertence ao mesmo bloco         ;
@@ -280,17 +281,17 @@
          (chave-1 (peca-bloco p-aux))
          (chave-2 (peca-bloco p-baixo)))
     (print "entrou: ve-abaixo")
-    (if (= (peca-cor p-aux) (peca-cor p-baixo))                                       ; Se o da frente for igual
-        (if (or (not chave-2) (= chave-1 chave-2))
-          (progn
-            (format t "Down Match On: posx: ~D posy: ~D ~% " posx posy)              
-            (setf (peca-bloco p-baixo) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
-            (setf (nth posx (nth (+ posy 1) tabuleiro)) p-baixo)                      ; Coloca a peça atualizada no tabuleiro
-            (setq l-aux (append l-aux (list p-baixo)))                                ; Adiciona a peça à lista para atualizar o bloco
-            (setf (bloco-lista-pecas (gethash (peca-bloco p-baixo) hash)) l-aux)      ; Atualiza o bloco na hash
-            (setf (bloco-y-max (gethash (peca-bloco p-baixo) hash)) (+ posy 1)))        ; Incrementa O ymax do bloco 
-          (junta-blocos tabuleiro hash chave-1 chave-2)))))
-
+    (if (= (peca-cor p-aux) (peca-cor p-baixo))                                             ; Se o da frente for igual
+        (if (not chave-2)
+                (progn
+                  (format t "Down Match On: posx: ~D posy: ~D ~% " posx posy)              
+                  (setf (peca-bloco p-baixo) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
+                  (setf (nth posx (nth (+ posy 1) tabuleiro)) p-baixo)                      ; Coloca a peça atualizada no tabuleiro
+                  (setq l-aux (append l-aux (list p-baixo)))                                ; Adiciona a peça à lista para atualizar o bloco
+                  (setf (bloco-lista-pecas (gethash (peca-bloco p-baixo) hash)) l-aux)      ; Atualiza o bloco na hash
+                  (setf (bloco-y-max (gethash (peca-bloco p-baixo) hash)) (+ posy 1)))      ; Incrementa o ymax do bloco 
+          (if (not (= chave-1 chave-2))        
+              (junta-blocos tabuleiro hash chave-1 chave-2))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

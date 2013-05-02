@@ -77,13 +77,13 @@
 ;;	FUNÇÔES AUXILIARES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;-------------------------------------------------------------;
-; Função que remove bloco do tabuleiro e atualiza a pontuação ;
-;-------------------------------------------------------------;
-; ARG1 - Estado (nó)                                          ;
-; ARG2 - Bloco a ser removido                                 ;
-; ARG3 - Hash table                                           ;
-;-------------------------------------------------------------;
+;--------------------------------------------------------------------------;
+; Função que remove bloco do tabuleiro e hash table e atualiza a pontuação ;
+;--------------------------------------------------------------------------;
+; ARG1 - Estado (nó)                                                       ;
+; ARG2 - Bloco a ser removido                                              ;
+; ARG3 - Hash table                                                        ;
+;--------------------------------------------------------------------------;
 
 (defun remove-bloco (estado bloco ht)
   (let* ((l-aux (bloco-lista-pecas (gethash bloco ht)))

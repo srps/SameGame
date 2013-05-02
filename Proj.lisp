@@ -45,9 +45,16 @@
   h-blocos                    ; Hash com os blocos existentes		
 )
 
+; Função que junta 2 blocos da mesma cor
+; ---------------------------------------;
+; ARG1 - tabuleiro com as peças
+; ARG2 - hashtable
+; ARG3 - chave do bloco a manter
+; ARG4 - chave do bloco que desaparece
+
 (defun junta-blocos (tabuleiro *ht* chave-b1 chave-b2)
   (let* ((b-aux (bloco-cor (gethash chave-b1 *ht*)))                 ; Referência para o bloco que se vai manter
-         (l-aux (bloco-lista-pecas b-aux))         ; Lista das peças do bloco que se vai manter
+         (l-aux (bloco-lista-pecas b-aux))                           ; Lista das peças do bloco que se vai manter
          (posx)
          (posy))
   (loop for p-aux in (bloco-lista-pecas (gethash chave-b2 *ht*)) do
@@ -59,7 +66,7 @@
   (setf (bloco-lista-pecas b-aux) l-aux)                             ; Coloca a nova lista no bloco original
   (setf (gethash chave-b1 *ht*) b-aux)                               ; Atualiza o bloco original na HT
   (remhash chave-b2 *ht*)))                                          ; Remove o 2º bloco da HT
-
+ 
         
 
 ; Atribui ou junta blocos a partir da peça à direita no tabuleiro

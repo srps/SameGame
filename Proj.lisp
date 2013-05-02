@@ -42,7 +42,9 @@
   n-pecas	              ; Peças por eliminar
   n-blocos	              ; Blocos por eliminar         
   tabuleiro
-  h-blocos                    ; Hash com os blocos existentes		
+  h-blocos                    ; Hash com os blocos existentes	
+  n-linhas                    ; Numero de linhas com peças
+  n-colunas                   ; Numero de colunas com peças
 )
 
 
@@ -291,7 +293,7 @@
 (defun resolve-same-game (problema algoritmo)
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
          (h-blocos (lista-blocos-estado-inicial tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
-         (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos))
+         (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema))))
         ; (gera-sucessores	#'sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)

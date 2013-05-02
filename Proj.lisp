@@ -85,7 +85,7 @@
 ; ARG4 - chave do bloco que desaparece
 
 (defun junta-blocos (tabuleiro ht chave-b1 chave-b2)
-  (let* ((b-aux (bloco-cor (gethash chave-b1 ht)))                   ; Referência para o bloco que se vai manter
+  (let* ((b-aux (gethash chave-b1 ht))                               ; Referência para o bloco que se vai manter
          (l-aux (bloco-lista-pecas b-aux))                           ; Lista das peças do bloco que se vai manter
          (posx)
          (posy))
@@ -233,8 +233,6 @@
         ; (heuristica-opt	#'heur-menor-altura)
          resul solucao)
     (print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1)))
-    (print-hash h-blocos)
-    (junta-blocos tab h-blocos 0 4)
     (print-hash h-blocos)
     estado-inicial)
 )

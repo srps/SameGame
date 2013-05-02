@@ -34,6 +34,10 @@
   pecas-int             ; peças interiores
   pecas-ext             ; peças exteriores
   id
+  x-min
+  x-max
+  y-min
+  y-max
 )
 
 	
@@ -69,7 +73,7 @@
   (let* ((b-aux (make-bloco)))
  (loop for key being the hash-keys of hash do
        (setf b-aux (gethash key hash))
-       (format t "~% Key: ~D Cor Bloco: ~D Numero De Peças: ~D " key (bloco-cor b-aux) (list-length (bloco-lista-pecas b-aux)))
+       (format t "~% Key: ~D Cor Bloco: ~D Numero De Peças: ~D Xmin: ~D Xmax: ~D Ymin: ~D Ymax: ~D " key (bloco-cor b-aux) (list-length (bloco-lista-pecas b-aux)) (bloco-x-min b-aux) (bloco-x-max b-aux) (bloco-y-min b-aux) (bloco-y-max b-aux))
        )
  )
 )
@@ -219,7 +223,7 @@
                 (if (not (peca-bloco p-aux))                             ; Esta cena é alto desperdício de recursos IMO. 
                     (progn                                               ; Só à primeira passagem é que as peças não vão ter bloco associado. Devia passar para o cria-tabuleiro que só corre uma vez.
                       (setf (peca-bloco p-aux) contador)
-                      (setq b-aux (make-bloco :cor (peca-cor p-aux) :lista-pecas (list p-aux) :id contador))
+                      (setq b-aux (make-bloco :cor (peca-cor p-aux) :lista-pecas (list p-aux) :id contador :x-min posx :x-max posx :y-min posy :y-max posy))
                        (setf (gethash (peca-bloco p-aux) resul) b-aux)
                       (setf (nth posx (nth posy tabuleiro)) p-aux) 
                       (incf contador))
@@ -254,7 +258,9 @@
               (setf (peca-bloco p-dir) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
               (setf (nth (+ posx 1) (nth posy tabuleiro)) p-dir)                      ; Coloca a peça atualizada no tabuleiro
               (setq l-aux (append l-aux (list p-dir)))                                ; Adiciona a peça à lista para atualizar o bloco
-              (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) hash)) l-aux))     ; Atualiza o bloco na hash
+              (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) hash)) l-aux)      ; Atualiza o bloco na hash
+              (setf (bloco-x-max (gethash (peca-bloco p-dir) hash)) (+ posx 1))       ; Incrementa O xmax do bloco
+                     )     
           (junta-blocos tabuleiro hash chave-1 chave-2)))))
 
 ;----------------------------------------------------------------------;
@@ -281,7 +287,8 @@
             (setf (peca-bloco p-baixo) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
             (setf (nth posx (nth (+ posy 1) tabuleiro)) p-baixo)                      ; Coloca a peça atualizada no tabuleiro
             (setq l-aux (append l-aux (list p-baixo)))                                ; Adiciona a peça à lista para atualizar o bloco
-            (setf (bloco-lista-pecas (gethash (peca-bloco p-baixo) hash)) l-aux))     ; Atualiza o bloco na hash
+            (setf (bloco-lista-pecas (gethash (peca-bloco p-baixo) hash)) l-aux)      ; Atualiza o bloco na hash
+            (setf (bloco-y-max (gethash (peca-bloco p-baixo) hash)) (+ posy 1)))        ; Incrementa O ymax do bloco 
           (junta-blocos tabuleiro hash chave-1 chave-2)))))
 
 
@@ -301,8 +308,7 @@
          resul solucao)
     (print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1)))
     (print-hash h-blocos)
-    (remove-bloco estado-inicial 0 h-blocos)
-    (print-hash h-blocos)
+    (print (gethash 3 h-blocos))
     estado-inicial)
 )
 

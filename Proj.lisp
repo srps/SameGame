@@ -121,7 +121,19 @@
   (setf (gethash chave-b1 ht) b-aux)                                 ; Atualiza o bloco original na HT
   (remhash chave-b2 ht)))                                            ; Remove o 2º bloco da HT
 
-;; Por testar - Dificil pois após o estado inicial não há blocos da mesma cor e de blocos diferentes ao lado uns dos outros, apenas acontece após haver remoções de blocos
+;--------------------------------------------;
+; Função que percorre uma determinada zona   ;
+; e determina os diferentes blocos existentes;
+; -------------------------------------------;
+; ARG1 - tabuleiro com as peças              ;
+; ARG2 - limite esquerda                     ;
+; ARG3 - limite direita                      ;
+; ARG4 - limite cima                         ;
+; ARG5 - limite baixo                        ;
+; ARG6 - numero linhas do tabuleiro          ;
+; ARG7 - numero colunas do tabuleiro         ;
+; ARG8 - hash com bloocs                     ;
+;--------------------------------------------;
 
 (defun lista-blocos (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col hash)
   (let* ((resul hash)
@@ -152,8 +164,12 @@
 ;;	FUNÇÔES DE LEITURA DE TABULEIRO INICIAL
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;        
 
-; Cria o tabuleiro principal com as peças
-; TODO: adicionar a funcionalidade de atribuir os blocos iniciais logo aqui, tbh.
+;--------------------------------------------------------------------;
+; Função que gera peças                                              ;
+; -------------------------------------------------------------------;
+; ARG1 - tabuleiro com lista de cores recebido no input              ;
+; ARG2 - numero de colunas                                           ;
+;--------------------------------------------------------------------;
 
 (defun cria-tabuleiro (tabuleiro n-col)
   (let* ((resul (list))
@@ -175,7 +191,19 @@
                 (incf posy)))))
                 resul))
                       
-; Percorre a área indicada do tabuleiro e verifica os blocos das peças em questão
+;--------------------------------------------;
+; Função que percorre o tabuleiro inicial    ;
+; e determina os diferentes blocos existentes;
+; -------------------------------------------;
+; ARG1 - tabuleiro com as peças              ;
+; ARG2 - limite esquerda                     ;
+; ARG3 - limite direita                      ;
+; ARG4 - limite cima                         ;
+; ARG5 - limite baixo                        ;
+; ARG6 - numero linhas do tabuleiro          ;
+; ARG7 - numero colunas do tabuleiro         ;
+; ARG8 - hash com bloocs                     ;
+;--------------------------------------------;
 
 (defun lista-blocos-estado-inicial (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col hash)
   (let* ((resul hash)
@@ -200,8 +228,16 @@
                     (ve-abaixo tabuleiro p-aux b-aux posx posy resul)))) ; Vê se bloco em baixo é da mesma cor   
     resul))
 
-; Atribui ou junta blocos a partir da peça à direita no tabuleiro
-; TODO: mudar nome da função, adicionar efeito dominó quando encontra uma peça da mesma cor com outro bloco associado
+;----------------------------------------------------------------------;
+; Função que verifica se a peça à direita pertence ao mesmo bloco      ;
+; ---------------------------------------------------------------------;
+; ARG1 - tabuleiro com as peças                                        ;
+; ARG2 - peça a partir da qual se verifica se é pertence ao mesmo bloco;
+; ARG3 - bloco a adicionar caso seja da mesma cor                      ;
+; ARG4 - coord.x da posicao da peça p-aux                              ;
+; ARG5 - coord.y da posicao da peça p-aux                              ;
+; ARG6 - hash com blocos                                               ;
+;----------------------------------------------------------------------;
 
 (defun ve-frente (tabuleiro p-aux b-aux posx posy hash)
   (let* ((l-aux (bloco-lista-pecas b-aux))
@@ -219,9 +255,16 @@
               (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) hash)) l-aux))     ; Atualiza o bloco na hash
           (junta-blocos tabuleiro hash chave-1 chave-2)))))
 
-
-; Atribui ou junta blocos a partir da peça por baixo no tabuleiro
-; TODO: mudar nome da função, adicionar efeito dominó quando encontra uma peça da mesma cor com outro bloco associado
+;----------------------------------------------------------------------;
+; Função que verifica se a peça abaixo pertence ao mesmo bloco         ;
+; ---------------------------------------------------------------------;
+; ARG1 - tabuleiro com as peças                                        ;
+; ARG2 - peça a partir da qual se verifica se é pertence ao mesmo bloco;
+; ARG3 - bloco a adicionar caso seja da mesma cor                      ;
+; ARG4 - coord.x da posicao da peça p-aux                              ;
+; ARG5 - coord.y da posicao da peça p-aux                              ;
+; ARG6 - hash com blocos                                               ;
+;----------------------------------------------------------------------;
 
 (defun ve-abaixo (tabuleiro p-aux b-aux posx posy hash)
   (let* ((l-aux (bloco-lista-pecas b-aux))
@@ -241,8 +284,9 @@
 
 
 
-
-; Funcao principal. Ponto de Entrada
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;	FUNÇÂO PRINCIPAL
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 
 (defun resolve-same-game (problema algoritmo)
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))

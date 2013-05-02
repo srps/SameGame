@@ -48,7 +48,7 @@
 ; Função que junta 2 blocos da mesma cor
 ; ---------------------------------------;
 ; ARG1 - tabuleiro com as peças
-; ARG2 - hashtable
+; ARG2 - hashtable dos blocos
 ; ARG3 - chave do bloco a manter
 ; ARG4 - chave do bloco que desaparece
 
@@ -58,8 +58,8 @@
          (posx)
          (posy))
   (loop for p-aux in (bloco-lista-pecas (gethash chave-b2 *ht*)) do
-        (setq posx (car peca-pos p-aux))                             ; Guarda a coordenada x da peça a ser mudada
-        (setq posy (cdr peca-pos p-aux))                             ; Guarda a coordenada y da peça a ser mudada
+        (setq posx (car (peca-pos p-aux)))                           ; Guarda a coordenada x da peça a ser mudada
+        (setq posy (cdr (peca-pos p-aux)))                           ; Guarda a coordenada y da peça a ser mudada
         (setf (peca-bloco p-aux) chave-b1)                           ; Muda o bloco da peça
         (setq l-aux (append l-aux (list p-aux)))                     ; Insere a peça na lista do bloco original
         (setf (nth posx (nth posy tabuleiro)) p-aux))                ; Re-insere a peça no tabuleiro

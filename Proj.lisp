@@ -161,8 +161,8 @@
                           (progn
                             (setf (car (peca-pos p-aux)) (- (car (peca-pos p-aux)) contador))         ; Puxa a peça para a esquerda
                             (setf (nth coluna (nth linha tabuleiro)) NIL)                             ; Atualiza o tabuleiro
-                            (setf (nth (+ coluna contador) (nth linha tabuleiro)) p-aux))             ; Atualiza o tabuleiro
-                        (break))))))                                                                  ; Quando vê NIL, salta para a próxima coluna
+                            (setf (nth (- coluna contador) (nth linha tabuleiro)) p-aux))             ; Atualiza o tabuleiro
+                        (return))))))                                                                 ; Quando vê NIL, salta para a próxima coluna
     contador))      
 
 
@@ -373,7 +373,7 @@
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
          (h-blocos (lista-blocos-estado-inicial tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
          (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema))))
-         (b-aux (gethash 3 h-blocos))
+         (b-aux (gethash 0 h-blocos))
         ; (gera-sucessores	#'sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
@@ -381,11 +381,13 @@
          resul solucao)
     (print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1)))
     (print-hash h-blocos)
-    (print (gethash 3 h-blocos))
-    (remove-bloco estado-inicial 3 h-blocos)
+    (print (gethash 0 h-blocos))
+    (remove-bloco estado-inicial 0 h-blocos)
     (gravidade tab b-aux h-blocos)
-(print (gethash 3 h-blocos))
-(print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1)))
+    (print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1)))
+    (encosta-esquerda tab h-blocos)
+    (print (gethash 0 h-blocos))
+    (print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1)))
     estado-inicial)
 )
 

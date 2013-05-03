@@ -161,7 +161,8 @@
                           (progn
                             (setf (car (peca-pos p-aux)) (- (car (peca-pos p-aux)) contador))         ; Puxa a peça para a esquerda
                             (setf (nth coluna (nth linha tabuleiro)) NIL)                             ; Atualiza o tabuleiro
-                            (setf (nth (+ coluna contador) (nth linha tabuleiro)) p-aux)))))))        ; Atualiza o tabuleiro
+                            (setf (nth (+ coluna contador) (nth linha tabuleiro)) p-aux))             ; Atualiza o tabuleiro
+                        (break))))))                                                                  ; Quando vê NIL, salta para a próxima coluna
     contador))      
 
 

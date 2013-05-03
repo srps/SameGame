@@ -148,7 +148,7 @@
          (y-ini (- (list-length tabuleiro) 1))
          (p-aux)
          (contador 0))
-    (print "entrou: gravidade")
+    (print "entrou: encosta-esquerda")
     (loop for coluna from 0 to x-fin do
           (if (eq (nth coluna (nth y-ini tabuleiro)) NIL)
               (incf contador)                                                                         ; Se for uma posição vazia, incrementa o contador

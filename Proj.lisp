@@ -87,19 +87,51 @@
 ; Função que remove bloco do tabuleiro e hash table e atualiza a pontuação ;
 ;--------------------------------------------------------------------------;
 ; ARG1 - Estado (nó)                                                       ;
-; ARG2 - Bloco a ser removido                                              ;
+; ARG2 - ID do bloco a ser removido                                              ;
 ; ARG3 - Hash table                                                        ;
 ;--------------------------------------------------------------------------;
 
-(defun remove-bloco (estado bloco ht)
-  (let* ((l-aux (bloco-lista-pecas (gethash bloco ht)))
+(defun remove-bloco (estado id-bloco ht)
+  (let* ((l-aux (bloco-lista-pecas (gethash id-bloco ht)))
          (pontos (expt (- (list-length l-aux) 2) 2))
          (pos))
-    (remhash bloco ht)
+    (remhash id-bloco ht)
     (setf (no-pontuacao estado) (+ (no-pontuacao estado) pontos))
     (loop for p-aux in l-aux do
           (setq pos (peca-pos p-aux))
           (setf (nth (car pos) (nth (cdr pos) (no-tabuleiro estado))) NIL))))
+
+;--------------------------------------------------------------------------;
+; Função que faz cair as peças consoante as leis da gravidade              ;
+;--------------------------------------------------------------------------;
+; ARG1 - Tabuleiro do jogo                                                 ;
+; ARG2 - Bloco a ser removido                                              ;
+; ARG3 - Hash table                                                        ;
+;--------------------------------------------------------------------------;
+
+(defun gravidade (tabuleiro bloco ht)
+  (let* ((x-ini (bloco-x-min bloco))
+         (x-fin (bloco-x-max bloco))
+         (y-ini (bloco-y-max bloco))
+         (p-aux)
+         (contador 0))
+    (print "entrou: gravidade")
+    (loop for coluna from x-ini to x-fin do
+          (loop for linha from y-ini downto 0 do
+                (setq p-aux (nth coluna (nth linha tabuleiro)))
+                (if (not (eq p-aux NIL))                                                     ; Se houver peça na posição indicada
+                    (if (> contador 0)                                                       ; Se houver espaços vazios abaixo da peça
+                        (progn
+                          (delete p-aux (bloco-lista-pecas (gethash (peca-bloco p-aux) ht))) ; Remove a peça do bloco
+                          (if (eq (bloco-lista-pecas bloco) NIL)                             ; Se o bloco ficar vazio--
+                              (remhash (bloco-id bloco) ht))                                 ; --Remove o bloco da hash
+                          (setf (cdr (peca-pos p-aux)) (+ (cdr (peca-pos p-aux)) contador))  ; Puxa a peça para baixo
+                          (setf (peca-bloco p-aux) -1)                                       ; Remove o bloco da peça
+                          (setf (nth coluna (nth linha tabuleiro)) NIL)                      ; Atualiza o tabuleiro
+                          (setf (nth coluna (nth (+ linha contador) tabuleiro)) p-aux)))     ; Atualiza o tabuleiro
+                  (incf contador)))                                                          ; Se for uma posição vazia, incrementa o contador
+          (setq contador 0))))                                                               ; Reset do contador a cada coluna nova
+
 
 
 ;----------------------------------------;
@@ -301,6 +333,7 @@
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
          (h-blocos (lista-blocos-estado-inicial tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
          (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema))))
+         (b-aux (gethash 3 h-blocos))
         ; (gera-sucessores	#'sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
@@ -309,6 +342,8 @@
     (print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1)))
     (print-hash h-blocos)
     (print (gethash 3 h-blocos))
+    (remove-bloco estado-inicial 3 h-blocos)
+    (gravidade tab b-aux h-blocos)
     estado-inicial)
 )
 

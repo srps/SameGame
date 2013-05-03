@@ -61,7 +61,9 @@
          (temp-list '()))
     (loop for posy from 0 to n-lin do
           (loop for posx from 0 to n-col do
+                (if (not (eq nil (nth posx (nth posy tabuleiro))))
                 (setq temp-list (append temp-list (list (peca-cor (nth posx (nth posy tabuleiro))))))
+                 (setq temp-list (append temp-list (list -1)))) ; Caso Não exista peça coloca -1
                 )
           (setq result (append result (list temp-list)))
           (setf temp-list '())
@@ -381,6 +383,8 @@
     (print (gethash 3 h-blocos))
     (remove-bloco estado-inicial 3 h-blocos)
     (gravidade tab b-aux h-blocos)
+(print (gethash 3 h-blocos))
+(print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1)))
     estado-inicial)
 )
 

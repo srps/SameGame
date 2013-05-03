@@ -105,7 +105,7 @@
 ; Função que faz cair as peças consoante as leis da gravidade              ;
 ;--------------------------------------------------------------------------;
 ; ARG1 - Tabuleiro do jogo                                                 ;
-; ARG2 - Bloco a ser removido                                              ;
+; ARG2 - Bloco que foi removido (fornece as coordenadas)                   ;
 ; ARG3 - Hash table                                                        ;
 ;--------------------------------------------------------------------------;
 
@@ -131,6 +131,36 @@
                           (setf (nth coluna (nth (+ linha contador) tabuleiro)) p-aux)))     ; Atualiza o tabuleiro
                   (incf contador)))                                                          ; Se for uma posição vazia, incrementa o contador
           (setq contador 0))))                                                               ; Reset do contador a cada coluna nova
+
+
+;---------------------------------------------------------------------------;
+; Função que encosta as peças à esquerda, eliminando colunas vazias no meio ;
+;---------------------------------------------------------------------------;
+; ARG1 - Tabuleiro do jogo                                                  ;
+; ARG2 - Hash table                                                         ;
+;---------------------------------------------------------------------------;
+; RET  - Nº de shifts que efetuou                                           ;
+;---------------------------------------------------------------------------;
+
+
+(defun encosta-esquerda (tabuleiro ht)
+  (let* ((x-fin (- (list-length (first tabuleiro)) 1))
+         (y-ini (- (list-length tabuleiro) 1))
+         (p-aux)
+         (contador 0))
+    (print "entrou: gravidade")
+    (loop for coluna from 0 to x-fin do
+          (if (eq (nth coluna (nth y-ini tabuleiro)) NIL)
+              (incf contador)                                                                         ; Se for uma posição vazia, incrementa o contador
+            (if (> contador 0)
+                (loop for linha from y-ini downto 0 do
+                      (setq p-aux (nth coluna (nth linha tabuleiro)))
+                      (if (not (eq p-aux NIL))                                                        ; Se houver peça na posição indicada
+                          (progn
+                            (setf (car (peca-pos p-aux)) (- (car (peca-pos p-aux)) contador))         ; Puxa a peça para a esquerda
+                            (setf (nth coluna (nth linha tabuleiro)) NIL)                             ; Atualiza o tabuleiro
+                            (setf (nth (+ coluna contador) (nth linha tabuleiro)) p-aux)))))))        ; Atualiza o tabuleiro
+    contador))      
 
 
 
@@ -294,7 +324,7 @@
               (setf (bloco-x-max (gethash (peca-bloco p-dir) ht)) (+ posx 1)))        ; Incrementa O xmax do bloco     
           (if (not (= chave-b1 chave-b2))
               (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
-                         (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
+                      (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
                   (junta-blocos tabuleiro ht chave-b1 chave-b2)
                 (junta-blocos tabuleiro ht chave-b2 chave-b1)))))))
 
@@ -327,7 +357,7 @@
                   (setf (bloco-y-max (gethash (peca-bloco p-baixo) ht)) (+ posy 1)))        ; Incrementa o ymax do bloco 
           (if (not (= chave-b1 chave-b2))        
               (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
-                         (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
+                      (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
                   (junta-blocos tabuleiro ht chave-b1 chave-b2)
                 (junta-blocos tabuleiro ht chave-b2 chave-b1)))))))
 

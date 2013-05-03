@@ -23,32 +23,32 @@
 
 
 (defstruct peca
-  pos
-  cor
-  bloco
+  pos                         ; posição da peça (x . y)
+  (cor -1 :type fixnum)       ; cor da peça
+  (bloco -1 :type fixnum)     ; bloco a que pertence a peça
 )
 
 (defstruct bloco
-  cor
-  lista-pecas
-  pecas-int             ; peças interiores
-  pecas-ext             ; peças exteriores
-  id
-  x-min
-  x-max
-  y-min
-  y-max
+  (cor -1 :type fixnum)       ; cor do bloco
+  lista-pecas                 ; lista das peças do bloco
+  pecas-int                   ; peças interiores
+  pecas-ext                   ; peças exteriores
+  (id -1 :type fixnum)        ; identificador do bloco
+  (x-min 20 :type fixnum)
+  (x-max -1 :type fixnum)
+  (y-min 20 :type fixnum)
+  (y-max -1 :type fixnum)
 )
 
 	
 (defstruct no
   (pontuacao 0	:type fixnum) ; Pontuação até ao momento do estado
-  n-pecas	              ; Peças por eliminar
-  n-blocos	              ; Blocos por eliminar         
+  (n-pecas 0 :type fixnum)    ; Peças por eliminar
+  (n-blocos 0 :type fixnum)   ; Blocos por eliminar         
   tabuleiro
   h-blocos                    ; Hash com os blocos existentes	
-  n-linhas                    ; Numero de linhas com peças
-  n-colunas                   ; Numero de colunas com peças
+  (n-linhas 0 :type fixnum)   ; Numero de linhas com peças
+  (n-colunas 0 :type fixnum)  ; Numero de colunas com peças
 )
 
 
@@ -127,19 +127,19 @@
   (setf (gethash chave-b1 ht) b-aux)                                 ; Atualiza o bloco original na HT
   (remhash chave-b2 ht)))                                            ; Remove o 2º bloco da HT
 
-;--------------------------------------------;
-; Função que percorre uma determinada zona   ;
-; e determina os diferentes blocos existentes;
-; -------------------------------------------;
-; ARG1 - tabuleiro com as peças              ;
-; ARG2 - limite esquerda                     ;
-; ARG3 - limite direita                      ;
-; ARG4 - limite cima                         ;
-; ARG5 - limite baixo                        ;
-; ARG6 - numero linhas do tabuleiro          ;
-; ARG7 - numero colunas do tabuleiro         ;
-; ARG8 - hash com bloocs                     ;
-;--------------------------------------------;
+;---------------------------------------------;
+; Função que percorre uma determinada zona    ;
+; e determina os diferentes blocos existentes ;
+; --------------------------------------------;
+; ARG1 - tabuleiro com as peças               ;
+; ARG2 - limite esquerda                      ;
+; ARG3 - limite direita                       ;
+; ARG4 - limite cima                          ;
+; ARG5 - limite baixo                         ;
+; ARG6 - numero linhas do tabuleiro           ;
+; ARG7 - numero colunas do tabuleiro          ;
+; ARG8 - hash com bloocs                      ;
+;---------------------------------------------;
 
 (defun lista-blocos (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col hash)
   (let* ((resul hash)
@@ -150,19 +150,18 @@
     (loop for posy from y-ini to y-fin do
           (loop for posx from x-ini to x-fin do
                 (setq p-aux (nth posx (nth posy tabuleiro)))
-                (if (not (>= posx (- n-col 1))) ;; Vê Frente
-                    (progn
+                (if (not (>= posx (- n-col 1)))                                                               ; Estou na última coluna do tabuleiro?
+                    (progn                                                                                    ; Se não, vê á direita
                       (setq p-aux-dir (nth (+ 1 posx) (nth posy tabuleiro)))
-                      (if (= (peca-cor p-aux) (peca-cor p-aux-dir)) ; Se peça à direita for da mesma cor
-                          (if (not (= (peca-bloco p-aux) (peca-bloco p-aux-dir))) ; Se forem da mesma cor mas blocos diferentes -> Merge blocos
-                              (junta-blocos tabuleiro hash (peca-bloco p-aux) (peca-bloco p-aux-dir))))))
-                
-                (if (not (>= posy (- n-lin 1))) ;; Vê Baixo
-                    (progn
+                      (if (= (peca-cor p-aux) (peca-cor p-aux-dir))                                           ; Se peça à direita for da mesma cor
+                          (if (not (= (peca-bloco p-aux) (peca-bloco p-aux-dir)))                             ; Se forem da mesma cor mas blocos diferentes
+                              (junta-blocos tabuleiro hash (peca-bloco p-aux) (peca-bloco p-aux-dir))))))     ; Junta os blocos              
+                (if (not (>= posy (- n-lin 1)))                                                               ; Estou na última linha do tabuleiro?
+                    (progn                                                                                    ; Se não, vê abaixo
                       (setq p-aux-baixo (nth posx (nth (+ 1 posy) tabuleiro))) 
-                      (if (= (peca-cor p-aux) (peca-cor p-aux-baixo)) ; Se peça em baixo for da mesma cor
-                          (if (not (= (peca-bloco p-aux) (peca-bloco p-aux-baixo))) ; Se forem da mesma cor mas blocos diferentes -> Merge blocos
-                              (junta-blocos tabuleiro hash (peca-bloco p-aux) (peca-bloco p-aux-baixo))))))))               
+                      (if (= (peca-cor p-aux) (peca-cor p-aux-baixo))                                         ; Se peça em baixo for da mesma cor
+                          (if (not (= (peca-bloco p-aux) (peca-bloco p-aux-baixo)))                           ; Se forem da mesma cor mas blocos diferentes 
+                              (junta-blocos tabuleiro hash (peca-bloco p-aux) (peca-bloco p-aux-baixo)))))))) ; Junta os blocos              
     resul))
  
 
@@ -171,7 +170,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;        
 
 ;--------------------------------------------------------------------;
-; Função que gera peças                                              ;
+; Função que gera peças e constrói um tabuleiro a partir do original ;
 ; -------------------------------------------------------------------;
 ; ARG1 - tabuleiro com lista de cores recebido no input              ;
 ; ARG2 - numero de colunas                                           ;
@@ -186,11 +185,11 @@
     (print "entrou: cria-tabuleiro")
     (loop for linha in tabuleiro do
           (loop for coluna in linha do
-                (setq p-aux (make-peca :pos (cons posx posy) :cor coluna :bloco NIL))
+                (setq p-aux (make-peca :pos (cons posx posy) :cor coluna :bloco -1))
                 (setq l-aux (append l-aux (list p-aux)))
-                (if (not (= posx (- n-col 1))) ; Avança no Y caso não esteja no final da linha
+                (if (not (= posx (- n-col 1)))                                       ; Avança no Y caso não esteja no final da linha
                     (incf posx)               
-                  (progn                       ; Se estiver no Final, desce 1 linha e faz reset no posx
+                  (progn                                                             ; Se estiver no Final, desce 1 linha e faz reset no posx
                     (setq resul (append resul (list l-aux)))
                     (setq l-aux (list))
                     (setf posx 0)          
@@ -220,14 +219,14 @@
     (loop for posy from y-ini to y-fin do
           (loop for posx from x-ini to x-fin do
                 (setq p-aux (nth posx (nth posy tabuleiro)))
-                (if (not (peca-bloco p-aux))                             ; Esta cena é alto desperdício de recursos IMO. 
-                    (progn                                               ; Só à primeira passagem é que as peças não vão ter bloco associado. Devia passar para o cria-tabuleiro que só corre uma vez.
-                      (setf (peca-bloco p-aux) contador)
-                      (setq b-aux (make-bloco :cor (peca-cor p-aux) :lista-pecas (list p-aux) :id contador :x-min posx :x-max posx :y-min posy :y-max posy))
-                       (setf (gethash (peca-bloco p-aux) resul) b-aux)
-                      (setf (nth posx (nth posy tabuleiro)) p-aux) 
-                      (incf contador))
-                    (setf b-aux (gethash (peca-bloco p-aux) resul)))     ; Daqui por mim só ficava isto.
+                (if (= (peca-bloco p-aux) -1)                                                                                                                 ; Vê se a peça já está num bloco                          
+                    (progn                                                                                                                                    ; Se não estiver num bloco
+                      (setf (peca-bloco p-aux) contador)                                                                                                      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                      (setq b-aux (make-bloco :cor (peca-cor p-aux) :lista-pecas (list p-aux) :id contador :x-min posx :x-max posx :y-min posy :y-max posy))  ;; Cria um bloco para a peça
+                       (setf (gethash (peca-bloco p-aux) resul) b-aux)                                                                                        ;; coloca-a no bloco
+                      (setf (nth posx (nth posy tabuleiro)) p-aux)                                                                                            ;; e guarda o bloco para referência
+                      (incf contador))                                                                                                                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                    (setf b-aux (gethash (peca-bloco p-aux) resul)))     ; Se já estiver num bloco, guarda o bloco para referência
                 (if (not (>= posx (- n-col 1)))
                     (ve-frente tabuleiro p-aux b-aux posx posy resul))   ; Vê se bloco à direita é da mesma cor
                 (if (not (>= posy (- n-lin 1)))
@@ -251,8 +250,8 @@
          (chave-1 (peca-bloco p-aux))
          (chave-2 (peca-bloco p-dir)))
     (print "entrou: ve-frente")
-    (if (= (peca-cor p-aux) (peca-cor p-dir))                                             ; Se o da frente for igual
-        (if (not chave-2)
+    (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
+        (if (= -1 chave-2)
             (progn
               (format t "Right Match On: posx: ~D posy: ~D ~% " posx posy)
               (setf (peca-bloco p-dir) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
@@ -260,8 +259,8 @@
               (setq l-aux (append l-aux (list p-dir)))                                ; Adiciona a peça à lista para atualizar o bloco
               (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) hash)) l-aux)      ; Atualiza o bloco na hash
               (setf (bloco-x-max (gethash (peca-bloco p-dir) hash)) (+ posx 1)))      ; Incrementa O xmax do bloco     
-        (if (not (= chave-1 chave-2))
-            (junta-blocos tabuleiro hash chave-1 chave-2))))))
+          (if (not (= chave-1 chave-2))
+              (junta-blocos tabuleiro hash chave-1 chave-2))))))
 
 
 ;----------------------------------------------------------------------;
@@ -282,7 +281,7 @@
          (chave-2 (peca-bloco p-baixo)))
     (print "entrou: ve-abaixo")
     (if (= (peca-cor p-aux) (peca-cor p-baixo))                                             ; Se o da frente for igual
-        (if (not chave-2)
+        (if (= -1 chave-2)
                 (progn
                   (format t "Down Match On: posx: ~D posy: ~D ~% " posx posy)              
                   (setf (peca-bloco p-baixo) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita

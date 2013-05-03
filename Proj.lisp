@@ -136,6 +136,7 @@
 
 ;----------------------------------------;
 ; Função que junta 2 blocos da mesma cor ;
+; Mantém o 1º bloco que é passado        ;
 ; ---------------------------------------;
 ; ARG1 - tabuleiro com as peças          ;
 ; ARG2 - hashtable dos blocos            ;
@@ -144,20 +145,20 @@
 ;----------------------------------------;
 
 (defun junta-blocos (tabuleiro ht chave-b1 chave-b2)
-  (let* ((b-aux (gethash chave-b1 ht))                               ; Referência para o bloco que se vai manter
-         (l-aux (bloco-lista-pecas b-aux))                           ; Lista das peças do bloco que se vai manter
+  (let* ((b-aux (gethash chave-b1 ht))                                   ; Referência para o bloco que se vai manter
+         (l-aux (bloco-lista-pecas b-aux))                               ; Lista das peças do bloco que se vai manter
          (posx)
          (posy))
     (print "entrou: junta-blocos")
   (loop for p-aux in (bloco-lista-pecas (gethash chave-b2 ht)) do
-        (setq posx (car (peca-pos p-aux)))                           ; Guarda a coordenada x da peça a ser mudada
-        (setq posy (cdr (peca-pos p-aux)))                           ; Guarda a coordenada y da peça a ser mudada
-        (setf (peca-bloco p-aux) chave-b1)                           ; Muda o bloco da peça
-        (setq l-aux (append l-aux (list p-aux)))                     ; Insere a peça na lista do bloco original
-        (setf (nth posx (nth posy tabuleiro)) p-aux))                ; Re-insere a peça no tabuleiro
-  (setf (bloco-lista-pecas b-aux) l-aux)                             ; Coloca a nova lista no bloco original
-  (setf (gethash chave-b1 ht) b-aux)                                 ; Atualiza o bloco original na HT
-  (remhash chave-b2 ht)))                                            ; Remove o 2º bloco da HT
+        (setq posx (car (peca-pos p-aux)))                               ; Guarda a coordenada x da peça a ser mudada
+        (setq posy (cdr (peca-pos p-aux)))                               ; Guarda a coordenada y da peça a ser mudada
+        (setf (peca-bloco p-aux) chave-b1)                               ; Muda o bloco da peça
+        (setq l-aux (append l-aux (list p-aux)))                         ; Insere a peça na lista do bloco original
+        (setf (nth posx (nth posy tabuleiro)) p-aux))                    ; Re-insere a peça no tabuleiro
+  (setf (bloco-lista-pecas b-aux) l-aux)                                 ; Coloca a nova lista no bloco original
+  (setf (gethash chave-b1 ht) b-aux)                                     ; Atualiza o bloco original na HT
+  (remhash chave-b2 ht)))                                                ; Remove o 2º bloco da HT
 
 ;---------------------------------------------;
 ; Função que percorre uma determinada zona    ;
@@ -276,23 +277,26 @@
 ; ARG6 - hash com blocos                                               ;
 ;----------------------------------------------------------------------;
 
-(defun ve-frente (tabuleiro p-aux b-aux posx posy hash)
+(defun ve-frente (tabuleiro p-aux b-aux posx posy ht)
   (let* ((l-aux (bloco-lista-pecas b-aux))
          (p-dir (nth (+ posx 1) (nth posy tabuleiro)))
-         (chave-1 (peca-bloco p-aux))
-         (chave-2 (peca-bloco p-dir)))
+         (chave-b1 (peca-bloco p-aux))
+         (chave-b2 (peca-bloco p-dir)))
     (print "entrou: ve-frente")
     (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
-        (if (= -1 chave-2)
+        (if (= -1 chave-b2)
             (progn
               (format t "Right Match On: posx: ~D posy: ~D ~% " posx posy)
               (setf (peca-bloco p-dir) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
               (setf (nth (+ posx 1) (nth posy tabuleiro)) p-dir)                      ; Coloca a peça atualizada no tabuleiro
               (setq l-aux (append l-aux (list p-dir)))                                ; Adiciona a peça à lista para atualizar o bloco
-              (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) hash)) l-aux)      ; Atualiza o bloco na hash
-              (setf (bloco-x-max (gethash (peca-bloco p-dir) hash)) (+ posx 1)))      ; Incrementa O xmax do bloco     
-          (if (not (= chave-1 chave-2))
-              (junta-blocos tabuleiro hash chave-1 chave-2))))))
+              (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) ht)) l-aux)        ; Atualiza o bloco na hash
+              (setf (bloco-x-max (gethash (peca-bloco p-dir) ht)) (+ posx 1)))        ; Incrementa O xmax do bloco     
+          (if (not (= chave-b1 chave-b2))
+              (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
+                         (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
+                  (junta-blocos tabuleiro ht chave-b1 chave-b2)
+                (junta-blocos tabuleiro ht chave-b2 chave-b1)))))))
 
 
 ;----------------------------------------------------------------------;
@@ -306,23 +310,26 @@
 ; ARG6 - hash com blocos                                               ;
 ;----------------------------------------------------------------------;
 
-(defun ve-abaixo (tabuleiro p-aux b-aux posx posy hash)
+(defun ve-abaixo (tabuleiro p-aux b-aux posx posy ht)
   (let* ((l-aux (bloco-lista-pecas b-aux))
          (p-baixo (nth posx (nth (+ posy 1) tabuleiro)))
-         (chave-1 (peca-bloco p-aux))
-         (chave-2 (peca-bloco p-baixo)))
+         (chave-b1 (peca-bloco p-aux))
+         (chave-b2 (peca-bloco p-baixo)))
     (print "entrou: ve-abaixo")
     (if (= (peca-cor p-aux) (peca-cor p-baixo))                                             ; Se o da frente for igual
-        (if (= -1 chave-2)
+        (if (= -1 chave-b2)
                 (progn
                   (format t "Down Match On: posx: ~D posy: ~D ~% " posx posy)              
                   (setf (peca-bloco p-baixo) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
                   (setf (nth posx (nth (+ posy 1) tabuleiro)) p-baixo)                      ; Coloca a peça atualizada no tabuleiro
                   (setq l-aux (append l-aux (list p-baixo)))                                ; Adiciona a peça à lista para atualizar o bloco
-                  (setf (bloco-lista-pecas (gethash (peca-bloco p-baixo) hash)) l-aux)      ; Atualiza o bloco na hash
-                  (setf (bloco-y-max (gethash (peca-bloco p-baixo) hash)) (+ posy 1)))      ; Incrementa o ymax do bloco 
-          (if (not (= chave-1 chave-2))        
-              (junta-blocos tabuleiro hash chave-1 chave-2))))))
+                  (setf (bloco-lista-pecas (gethash (peca-bloco p-baixo) ht)) l-aux)        ; Atualiza o bloco na hash
+                  (setf (bloco-y-max (gethash (peca-bloco p-baixo) ht)) (+ posy 1)))        ; Incrementa o ymax do bloco 
+          (if (not (= chave-b1 chave-b2))        
+              (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
+                         (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
+                  (junta-blocos tabuleiro ht chave-b1 chave-b2)
+                (junta-blocos tabuleiro ht chave-b2 chave-b1)))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

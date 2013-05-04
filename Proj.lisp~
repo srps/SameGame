@@ -118,7 +118,7 @@
 (defun procura-alternativa (estado sucessores heuristica)
 )
 
-(defun procura-iterativa(estado-inicial)
+(defun sondagem-iterativa(estado-inicial)
   (let* (	
          (melhor-resultado 0)
          ;(melhor-resultado (list (list (make-estado	:cantos nil :colocadas nil :livres nil
@@ -536,7 +536,7 @@
                  (procura estado-inicial gera-sucessores heuristica2))
 
                 ((string-equal algoritmo "sondagem.iterativa")
-                 (procura-iterativa estado-inicial))
+                 (sondagem-iterativa estado-inicial))
 
                 ((string-equal algoritmo "abordagem.alternativa")
                  (procura-alternativa estado-inicial gera-sucessores heuristica1))))

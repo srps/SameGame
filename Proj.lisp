@@ -116,6 +116,8 @@
               )))
 )
 
+
+
 ;--------------------------------------------------------------------------;
 ; Função que remove bloco do tabuleiro e hash table e atualiza a pontuação ;
 ;--------------------------------------------------------------------------;
@@ -130,6 +132,7 @@
          (pos))
     (remhash id-bloco ht)
     (setf (no-pontuacao estado) (+ (no-pontuacao estado) pontos))
+    (setf (no-n-pecas estado) (- (no-n-pecas estado) (list-length l-aux)))
     (loop for p-aux in l-aux do
           (setq pos (peca-pos p-aux))
           (setf (nth (car pos) (nth (cdr pos) (no-tabuleiro estado))) NIL))))
@@ -169,14 +172,15 @@
 ;---------------------------------------------------------------------------;
 ; Função que encosta as peças à esquerda, eliminando colunas vazias no meio ;
 ;---------------------------------------------------------------------------;
-; ARG1 - Tabuleiro do jogo                                                  ;
-; ARG2 - Hash table                                                         ;
+; ARG1 - estado
+; ARG2 - Tabuleiro do jogo                                                  ;
+; ARG3 - Hash table                                                         ;
 ;---------------------------------------------------------------------------;
 ; RET  - Nº de shifts que efetuou                                           ;
 ;---------------------------------------------------------------------------;
 
 
-(defun encosta-esquerda (tabuleiro ht)
+(defun encosta-esquerda (estado tabuleiro ht)
   (let* ((x-fin (- (list-length (first tabuleiro)) 1))
          (y-ini (- (list-length tabuleiro) 1))
          (p-aux)
@@ -194,6 +198,7 @@
                             (setf (nth coluna (nth linha tabuleiro)) NIL)                             ; Atualiza o tabuleiro
                             (setf (nth (- coluna contador) (nth linha tabuleiro)) p-aux))             ; Atualiza o tabuleiro
                         (return))))))                                                                 ; Quando vê NIL, salta para a próxima coluna
+    (setf (no-n-colunas estado) (- (no-n-colunas estado) contador))
     contador))      
 
 
@@ -307,7 +312,7 @@
 ; ARG8 - hash com bloocs                     ;
 ;--------------------------------------------;
 
-(defun lista-blocos-estado-inicial (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col hash)
+(defun lista-blocos (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col hash)
   (let* ((resul hash)
          (contador 0)
          (p-aux (make-peca))
@@ -409,7 +414,7 @@
 
 (defun resolve-same-game (problema algoritmo)
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
-         (h-blocos (lista-blocos-estado-inicial tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
+         (h-blocos (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
          (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema))))
          (b-aux (gethash 0 h-blocos))
         ; (gera-sucessores	#'sucessores)
@@ -417,15 +422,15 @@
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
         ; (heuristica-opt	#'heur-menor-altura)
          resul solucao)
-(print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1))) 
+    (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
     (remove-bloco estado-inicial 0 h-blocos)
     (gravidade tab b-aux h-blocos)
-    (encosta-esquerda tab h-blocos)
+    (encosta-esquerda estado-inicial tab h-blocos)
     (print tab)
     (clear-hash h-blocos)
     (clear-tab tab (- (list-length (first problema)) 1) (- (list-length problema) 1))
-    (print (lista-blocos-estado-inicial tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) h-blocos)) 
-    (print (print-tabuleiro tab (- (list-length problema) 1) (- (list-length (first problema)) 1))) 
+    (print (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) h-blocos)) 
+    (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
     (print (print-hash h-blocos))
     (print "FIMMMMMMMMMMMM")
     estado-inicial)

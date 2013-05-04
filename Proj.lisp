@@ -81,6 +81,92 @@
  )
 )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;	SUCESSORES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;--------------------------------------------------------------------------;
+; Função que gera sucessores                                               ;
+;--------------------------------------------------------------------------;
+; ARG1 - estado                                                       ;
+;--------------------------------------------------------------------------;
+
+(defun sucessores (estado)
+  (print "OLLAAAAAAAAAA")
+  (print estado)
+)
+  
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;	HEURISTICAS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;	PROCURA
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defun procura (estado sucessores heuristica)
+  (print sucessores)
+  (list sucessores)
+  )
+
+
+(defun procura-alternativa (estado sucessores heuristica)
+)
+
+(defun sondagem-iterativa(estado-inicial)
+  (let* (	
+         (melhor-resultado 0)
+         ;(melhor-resultado (list (list (make-estado	:cantos nil :colocadas nil :livres nil
+	;									:rectangulo (list +MAIOR_RAIO+ +MAIOR_RAIO+))) 0 0 0))
+		;	(tentativas 0)
+		;	(melhor-altura +BIG_INT+)
+		;	(melhor-tentativa)
+		;	resultado
+         (ngerados 0)
+         (nexpandidos 0)
+         (max-segundos 5)	; 4 mins
+         (tempo-inicio (get-internal-run-time)) 
+							; (inicio + Nsegs*Tickspsec)
+         (tempo-limite (+ tempo-inicio (* max-segundos internal-time-units-per-second)))
+		;	(tempo-melhor tempo-inicio)
+         )
+		 
+    (print ngerados)
+    (loop while (> tempo-limite (get-internal-run-time)) do
+		;	(if (car (setf resultado (chama-procura estado-inicial #'sucessores-sondagem nil "profundidade")))
+		;		(let ((altura (maior-altura (estado-colocadas (resultado-solucao resultado)))))
+		;			(if (< altura melhor-altura)
+		;				(progn	; Optimizacao: corre a proxima ronda com a nova altura minima encontrada
+		;						(setf melhor-altura	(setf (second (estado-rectangulo estado-inicial)) altura))
+		;						(setf tempo-melhor (get-internal-run-time))
+		;						(setf melhor-resultado	resultado)
+		;						(setf melhor-tentativa tentativas)
+		;						(printf "Menor Altura ja' encontrada: %d" melhor-altura)
+		;				))))
+		;	
+		;	(incf tentativas)
+		;	(incf nexpandidos	(caddr resultado))
+		;	(incf ngerados		(cadddr resultado)))
+
+		;(decf tempo-melhor tempo-inicio)
+		
+		;(setf (cadr		melhor-resultado) (- (get-internal-run-time) tempo-inicio))
+		;(setf (caddr	melhor-resultado) nexpandidos)
+		;(setf (cadddr	melhor-resultado) ngerados)
+          ;(printf "Max ticks: %d, Tentativas: %d" (cadr melhor-resultado) tentativas)
+          ;(printf "Melhor solucao na %d tentativa, com %d ticks" melhor-tentativa tempo-melhor)
+          )
+          melhor-resultado)
+    )
+
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	FUNÇÔES AUXILIARES
@@ -338,7 +424,6 @@
     (print "entrou: lista-blocos-estado-inicial")
     (loop for posy from y-ini to y-fin do
           (loop for posx from x-ini to x-fin do
-                (print (nth posx (nth posy tabuleiro)))
                 (if (not (eq (nth posx (nth posy tabuleiro)) nil))
                     (progn      
                       (setq p-aux (nth posx (nth posy tabuleiro)))
@@ -350,13 +435,11 @@
                             (setf (nth posx (nth posy tabuleiro)) p-aux)                                                                                            ;; e guarda o bloco para referência
                             (incf contador)))                                                                                                                        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                       (setf b-aux (gethash (peca-bloco p-aux) resul))
-                      (print (nth (+ posx 1) (nth posy tabuleiro)))
                       (if (and (not (>= posx (- n-col 1)))
                                (not (eq (nth (+ posx 1) (nth posy tabuleiro)) nil)))
                           (ve-frente tabuleiro p-aux b-aux posx posy resul))   ; Vê se bloco à direita é da mesma cor
                       (if (not (>= posy (- n-lin 1)))
                           (ve-abaixo tabuleiro p-aux b-aux posx posy resul))))     ; Se já estiver num bloco, guarda o bloco para referência
-                (print "AI")
                 )) ; Vê se bloco em baixo é da mesma cor   
     resul))
 
@@ -376,11 +459,11 @@
          (p-dir (nth (+ posx 1) (nth posy tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-dir)))
-    (print "entrou: ve-frente")
+    ;(print "entrou: ve-frente")
     (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
         (if (= -1 chave-b2)
             (progn
-              (format t "Right Match On: posx: ~D posy: ~D ~% " posx posy)
+              ;(format t "Right Match On: posx: ~D posy: ~D ~% " posx posy)
               (setf (peca-bloco p-dir) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
               (setf (nth (+ posx 1) (nth posy tabuleiro)) p-dir)                      ; Coloca a peça atualizada no tabuleiro
               (setq l-aux (append l-aux (list p-dir)))                                ; Adiciona a peça à lista para atualizar o bloco
@@ -409,11 +492,11 @@
          (p-baixo (nth posx (nth (+ posy 1) tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-baixo)))
-    (print "entrou: ve-abaixo")
+    ;(print "entrou: ve-abaixo")
     (if (= (peca-cor p-aux) (peca-cor p-baixo))                                             ; Se o da frente for igual
         (if (= -1 chave-b2)
                 (progn
-                  (format t "Down Match On: posx: ~D posy: ~D ~% " posx posy)              
+                  ;(format t "Down Match On: posx: ~D posy: ~D ~% " posx posy)              
                   (setf (peca-bloco p-baixo) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
                   (setf (nth posx (nth (+ posy 1) tabuleiro)) p-baixo)                      ; Coloca a peça atualizada no tabuleiro
                   (setq l-aux (append l-aux (list p-baixo)))                                ; Adiciona a peça à lista para atualizar o bloco
@@ -435,29 +518,47 @@
          (h-blocos (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
          (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0))
          (b-aux (gethash 0 h-blocos))
-        ; (gera-sucessores	#'sucessores)
+         (gera-sucessores	#'sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
         ; (heuristica-opt	#'heur-menor-altura)
          resul solucao)
-    (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
-    (maior-bloco estado-inicial h-blocos) 
-    (remove-bloco estado-inicial 0 h-blocos)
-    (gravidade tab b-aux h-blocos)
-    (encosta-esquerda estado-inicial tab h-blocos)
-    (print tab)
-    (clear-hash h-blocos)
-    (clear-tab tab (- (list-length (first problema)) 1) (- (list-length problema) 1))
-    (print (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) h-blocos)) 
-    (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
-    (print (print-hash h-blocos))
-    (maior-bloco estado-inicial h-blocos)
+
+
+    (setf resul
+          (cond ((string-equal algoritmo "melhor.abordagem")
+                 (procura estado-inicial gera-sucessores heuristica1))
+
+                ((string-equal algoritmo "a*.melhor.heuristica")
+                 (procura estado-inicial gera-sucessores heuristica1))
+
+                ((string-equal algoritmo "a*.melhor.heuristica.alternativa")
+                 (procura estado-inicial gera-sucessores heuristica2))
+
+                ((string-equal algoritmo "sondagem.iterativa")
+                 (sondagem-iterativa estado-inicial))
+
+                ((string-equal algoritmo "abordagem.alternativa")
+                 (procura-alternativa estado-inicial gera-sucessores heuristica1))))
+
+    ;(print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
+    ;(maior-bloco estado-inicial h-blocos) 
+    ;(remove-bloco estado-inicial 0 h-blocos)
+    ;(gravidade tab b-aux h-blocos)
+    ;(encosta-esquerda estado-inicial tab h-blocos)
+    ;(print tab)
+    ;(clear-hash h-blocos)
+    ;(clear-tab tab (- (list-length (first problema)) 1) (- (list-length problema) 1))
+    ;(print (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) h-blocos)) 
+    ;(print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
+    ;(print (print-hash h-blocos))
+    ;(maior-bloco estado-inicial h-blocos)
     (print "FIMMMMMMMMMMMM")
     estado-inicial)
 )
 
 
 (print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 1 2) (1 1 1 1 1))
- "melhor.abordagem.optimizacao"))
+ "sondagem.iterativa"))
 
 

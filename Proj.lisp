@@ -49,6 +49,7 @@
   h-blocos                    ; Hash com os blocos existentes	
   (n-linhas 0 :type fixnum)   ; Numero de linhas com peças
   (n-colunas 0 :type fixnum)  ; Numero de colunas com peças
+  maior-bloco                 ; Tamanho do maior bloco
 )
 
 
@@ -75,7 +76,7 @@
   (let* ((b-aux (make-bloco)))
  (loop for key being the hash-keys of hash do
        (setf b-aux (gethash key hash))
-       (format t "~% Key: ~D Cor Bloco: ~D Numero De Peças: ~D Xmin: ~D Xmax: ~D Ymin: ~D Ymax: ~D " key (bloco-cor b-aux) (list-length (bloco-lista-pecas b-aux)) (bloco-x-min b-aux) (bloco-x-max b-aux) (bloco-y-min b-aux) (bloco-y-max b-aux))
+       (format t "~% Key: ~D Cor Bloco: ~D Numero De Peças: ~D Xmin: ~D Xmax: ~D Ymin: ~D Ymax: ~D Lista Peças: ~A" key (bloco-cor b-aux) (list-length (bloco-lista-pecas b-aux)) (bloco-x-min b-aux) (bloco-x-max b-aux) (bloco-y-min b-aux) (bloco-y-max b-aux) (bloco-lista-pecas b-aux))
        )
  )
 )
@@ -117,6 +118,23 @@
 )
 
 
+;--------------------------------------------------------------------------;
+; Função que devolve o tamanho do maior bloco da hash                      ;
+;--------------------------------------------------------------------------;
+; ARG1 - estado                                                            ;
+; ARG2 - hash                                                              ;
+;--------------------------------------------------------------------------;
+
+(defun maior-bloco (estado hash)
+  (let* ((result 0)
+         (tmp 0)
+          (b-aux (make-bloco)))
+          (loop for key being the hash-keys of hash do
+                (setf b-aux (gethash key hash))
+                (if (< result (list-length (bloco-lista-pecas b-aux)))
+                    (setf result (list-length (bloco-lista-pecas b-aux)))))
+          (setf (no-maior-bloco estado) result)   
+))
 
 ;--------------------------------------------------------------------------;
 ; Função que remove bloco do tabuleiro e hash table e atualiza a pontuação ;
@@ -415,7 +433,7 @@
 (defun resolve-same-game (problema algoritmo)
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
          (h-blocos (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
-         (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema))))
+         (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0))
          (b-aux (gethash 0 h-blocos))
         ; (gera-sucessores	#'sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
@@ -423,6 +441,7 @@
         ; (heuristica-opt	#'heur-menor-altura)
          resul solucao)
     (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
+    (maior-bloco estado-inicial h-blocos) 
     (remove-bloco estado-inicial 0 h-blocos)
     (gravidade tab b-aux h-blocos)
     (encosta-esquerda estado-inicial tab h-blocos)
@@ -432,6 +451,7 @@
     (print (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) h-blocos)) 
     (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
     (print (print-hash h-blocos))
+    (maior-bloco estado-inicial h-blocos)
     (print "FIMMMMMMMMMMMM")
     estado-inicial)
 )

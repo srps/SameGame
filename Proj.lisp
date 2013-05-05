@@ -386,6 +386,7 @@
                             (setf (nth coluna (nth linha tabuleiro)) NIL)                             ; Atualiza o tabuleiro
                             (setf (nth (- coluna contador) (nth linha tabuleiro)) p-aux))             ; Atualiza o tabuleiro
                         (return))))))                                                                 ; Quando vê NIL, salta para a próxima coluna
+    (print contador)
     (setf (no-n-colunas estado) (- (no-n-colunas estado) contador))
     contador))      
 
@@ -411,7 +412,6 @@
          (xmax (bloco-x-max b-trash))                                    ; X Máximo do bloco que vai à vida
          (ymin (bloco-y-min b-trash))                                    ; Y Mínimo do bloco que vai à vida
          (ymax (bloco-y-max b-trash)))                                   ; Y Máximo do bloco que vai à vida
-    (print "entrou: junta-blocos")
   (loop for p-aux in (bloco-lista-pecas b-trash) do
         (setq posx (car (peca-pos p-aux)))                               ; Guarda a coordenada x da peça a ser mudada
         (setq posy (cdr (peca-pos p-aux)))                               ; Guarda a coordenada y da peça a ser mudada
@@ -422,11 +422,11 @@
   (if (> (bloco-x-min b-aux) xmin)                                       ;;---------------------------------------------;
       (setf (bloco-x-min b-aux) xmin))                                   ;;                                             ;
   (if (< (bloco-x-max b-aux) xmax)                                       ;;                                             ;
-      (setf (bloco-x-min b-aux) xmax))                                   ;; Atualiza os mínimos e máximos do bloco      ;
+      (setf (bloco-x-max b-aux) xmax))                                   ;; Atualiza os mínimos e máximos do bloco      ;
   (if (> (bloco-y-min b-aux) ymin)                                       ;;                                             ;
-      (setf (bloco-x-min b-aux) ymin))                                   ;;                                             ;
+      (setf (bloco-y-min b-aux) ymin))                                   ;;                                             ;
   (if (< (bloco-y-max b-aux) ymax)                                       ;;                                             ;
-      (setf (bloco-x-min b-aux) ymax))                                   ;;---------------------------------------------;
+      (setf (bloco-y-max b-aux) ymax))                                   ;;---------------------------------------------;
   (setf (gethash chave-b1 ht) b-aux)                                     ; Atualiza o bloco original na HT
   (remhash chave-b2 ht)))                                                ; Remove o 2º bloco da HT
 
@@ -672,15 +672,24 @@
                  (procura-alternativa estado-inicial gera-sucessores heuristica1))))
 
     (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
-    ;(maior-bloco estado-inicial h-blocos) 
+    (print (print-hash h-blocos))
+    (maior-bloco estado-inicial h-blocos) 
     (remove-bloco estado-inicial 0 h-blocos)
     (gravidade tab b-aux h-blocos)
+    (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
     (encosta-esquerda estado-inicial tab h-blocos)
-    ;(print tab)
+    (print tab)
     ;(clear-hash h-blocos)
     ;(clear-tab tab (- (list-length (first problema)) 1) (- (list-length problema) 1))
-    ;(print (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) h-blocos)) 
-    ;(print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
+    (print (- (no-n-colunas estado-inicial) 1))
+    (print (- (no-n-linhas estado-inicial) 1))
+    (print (no-n-linhas estado-inicial))
+    (print (no-n-colunas estado-inicial))
+
+        (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
+    (print (print-hash h-blocos))
+    (print (lista-blocos tab 0 (- (no-n-colunas estado-inicial) 1) 0 (- (no-n-linhas estado-inicial) 1) (no-n-linhas estado-inicial) (no-n-colunas estado-inicial) h-blocos)) 
+    (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
     (print (print-hash h-blocos))
     ;(maior-bloco estado-inicial h-blocos)
     (print "FIMMMMMMMMMMMM")

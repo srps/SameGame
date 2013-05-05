@@ -131,7 +131,7 @@
 ;--------------------------------------------------------------------------;
 ; Função que gera sucessores                                               ;
 ;--------------------------------------------------------------------------;
-; ARG1 - estado                                                       ;
+; ARG1 - estado                                                            ;
 ;--------------------------------------------------------------------------;
 
 (defun gera-sucessores (estado)
@@ -252,7 +252,7 @@
 ;--------------------------------------------------------------------------;
 ; Função que limpa a hash                                                  ;
 ;--------------------------------------------------------------------------;
-; ARG1 - Hash                                                       ;
+; ARG1 - Hash                                                              ;
 ;--------------------------------------------------------------------------;
 
 
@@ -303,7 +303,7 @@
 ; Função que remove bloco do tabuleiro e hash table e atualiza a pontuação ;
 ;--------------------------------------------------------------------------;
 ; ARG1 - Estado (nó)                                                       ;
-; ARG2 - ID do bloco a ser removido                                              ;
+; ARG2 - ID do bloco a ser removido                                        ;
 ; ARG3 - Hash table                                                        ;
 ;--------------------------------------------------------------------------;
 
@@ -340,8 +340,7 @@
                     (if (> contador 0)                                                       ; Se houver espaços vazios abaixo da peça
                         (progn
                           (delete p-aux (bloco-lista-pecas (gethash (peca-bloco p-aux) ht))) ; Remove a peça do bloco
-                          (if (eq (bloco-lista-pecas bloco) NIL)                             ; Se o bloco ficar vazio--
-                              (remhash (bloco-id bloco) ht))                                 ; --Remove o bloco da hash
+                          (remhash (bloco-id bloco) ht)                                      ; --Remove o bloco da hash
                           (setf (cdr (peca-pos p-aux)) (+ (cdr (peca-pos p-aux)) contador))  ; Puxa a peça para baixo
                           (setf (peca-bloco p-aux) -1)                                       ; Remove o bloco da peça
                           (setf (nth coluna (nth linha tabuleiro)) NIL)                      ; Atualiza o tabuleiro
@@ -458,28 +457,28 @@
 ; ARG8 - hash com bloocs                      ;
 ;---------------------------------------------;
 
-;(defun lista-blocos (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col hash)
-;  (let* ((resul hash)
-;         (p-aux (make-peca))
-;         (p-aux-dir (make-peca))
-;         (p-aux-baixo (make-peca)))
-;    (print "entrou: lista-blocos")
-;    (loop for posy from y-ini to y-fin do
-;          (loop for posx from x-ini to x-fin do
-;                (setq p-aux (nth posx (nth posy tabuleiro)))
-;                (if (not (>= posx (- n-col 1)))                                                               ; Estou na última coluna do tabuleiro?
-;                    (progn                                                                                    ; Se não, vê á direita
-;                      (setq p-aux-dir (nth (+ 1 posx) (nth posy tabuleiro)))
-;                      (if (= (peca-cor p-aux) (peca-cor p-aux-dir))                                           ; Se peça à direita for da mesma cor
-;                          (if (not (= (peca-bloco p-aux) (peca-bloco p-aux-dir)))                             ; Se forem da mesma cor mas blocos diferentes
-;                              (junta-blocos tabuleiro hash (peca-bloco p-aux) (peca-bloco p-aux-dir))))))     ; Junta os blocos              
-;                (if (not (>= posy (- n-lin 1)))                                                               ; Estou na última linha do tabuleiro?
-;                    (progn                                                                                    ; Se não, vê abaixo
-;                      (setq p-aux-baixo (nth posx (nth (+ 1 posy) tabuleiro))) 
-;                      (if (= (peca-cor p-aux) (peca-cor p-aux-baixo))                                         ; Se peça em baixo for da mesma cor
-;                          (if (not (= (peca-bloco p-aux) (peca-bloco p-aux-baixo)))                           ; Se forem da mesma cor mas blocos diferentes 
-;                              (junta-blocos tabuleiro hash (peca-bloco p-aux) (peca-bloco p-aux-baixo)))))))) ; Junta os blocos              
-;    resul))
+(defun lista-blocos (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col hash)
+  (let* ((resul hash)
+         (p-aux (make-peca))
+         (p-aux-dir (make-peca))
+         (p-aux-baixo (make-peca)))
+    (print "entrou: lista-blocos")
+    (loop for posy from y-ini to y-fin do
+          (loop for posx from x-ini to x-fin do
+                (setq p-aux (nth posx (nth posy tabuleiro)))
+                (if (not (>= posx (- n-col 1)))                                                               ; Estou na última coluna do tabuleiro?
+                    (progn                                                                                    ; Se não, vê á direita
+                      (setq p-aux-dir (nth (+ 1 posx) (nth posy tabuleiro)))
+                      (if (= (peca-cor p-aux) (peca-cor p-aux-dir))                                           ; Se peça à direita for da mesma cor
+                          (if (not (= (peca-bloco p-aux) (peca-bloco p-aux-dir)))                             ; Se forem da mesma cor mas blocos diferentes
+                              (junta-blocos tabuleiro hash (peca-bloco p-aux) (peca-bloco p-aux-dir))))))     ; Junta os blocos              
+                (if (not (>= posy (- n-lin 1)))                                                               ; Estou na última linha do tabuleiro?
+                    (progn                                                                                    ; Se não, vê abaixo
+                      (setq p-aux-baixo (nth posx (nth (+ 1 posy) tabuleiro))) 
+                      (if (= (peca-cor p-aux) (peca-cor p-aux-baixo))                                         ; Se peça em baixo for da mesma cor
+                          (if (not (= (peca-bloco p-aux) (peca-bloco p-aux-baixo)))                           ; Se forem da mesma cor mas blocos diferentes 
+                              (junta-blocos tabuleiro hash (peca-bloco p-aux) (peca-bloco p-aux-baixo)))))))) ; Junta os blocos              
+    resul))
  
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -527,7 +526,7 @@
 ; ARG8 - hash com bloocs                     ;
 ;--------------------------------------------;
 
-(defun lista-blocos (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col hash)
+(defun lista-blocos-inicial (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col hash)
   (let* ((resul hash)
          (contador 0)
          (p-aux (make-peca))
@@ -626,7 +625,7 @@
 
 (defun resolve-same-game (problema algoritmo)
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
-         (h-blocos (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
+         (h-blocos (lista-blocos-inicial tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
          (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0))
          (b-aux (gethash 0 h-blocos))
         ; (g-sucessores	#'gera-sucessores)

@@ -330,8 +330,42 @@
         (setq l-aux (append l-aux (list p-aux)))                         ; Insere a peça na lista do bloco original
         (setf (nth posx (nth posy tabuleiro)) p-aux))                    ; Re-insere a peça no tabuleiro
   (setf (bloco-lista-pecas b-aux) l-aux)                                 ; Coloca a nova lista no bloco original
+  (setf b-aux (actualiza-margens b-aux))
   (setf (gethash chave-b1 ht) b-aux)                                     ; Atualiza o bloco original na HT
   (remhash chave-b2 ht)))                                                ; Remove o 2º bloco da HT
+
+
+
+;--------------------------------------------------------;
+; Função que actualiza as margens do bloco após junção   ;
+; -------------------------------------------------------;
+; ARG1 - bloco a actualizar                              ;
+;--------------------------------------------------------;
+
+(defun actualiza-margens (b-aux)
+  (let* ((xmin 0)
+         (xmax 0)
+         (ymin 0)
+         (ymax 0)
+         (pecas (bloco-lista-pecas b-aux)))
+    (setf xmin (car (peca-pos (car pecas))))
+    (setf ymin (cdr (peca-pos (car pecas))))
+    (loop for p-aux in (cdr pecas) do
+          (print p-aux)
+          (if (< (car (peca-pos p-aux)) xmin)
+              (setf xmin  (car (peca-pos p-aux))))
+          (if (> (car (peca-pos p-aux)) xmax)
+              (setf xmax  (car (peca-pos p-aux))))
+          (if (< (cdr (peca-pos p-aux)) ymin)
+              (setf ymin  (cdr (peca-pos p-aux))))
+          (if (> (cdr (peca-pos p-aux)) ymax)
+              (setf ymax  (cdr (peca-pos p-aux)))))
+    (setf (bloco-x-min b-aux) xmin)
+    (setf (bloco-x-max b-aux) xmax)
+    (setf (bloco-y-min b-aux) ymin)
+    (setf (bloco-y-max b-aux) ymax)
+    b-aux))
+
 
 ;---------------------------------------------;
 ; Função que percorre uma determinada zona    ;
@@ -541,7 +575,7 @@
                 ((string-equal algoritmo "abordagem.alternativa")
                  (procura-alternativa estado-inicial gera-sucessores heuristica1))))
 
-    ;(print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
+    (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
     ;(maior-bloco estado-inicial h-blocos) 
     ;(remove-bloco estado-inicial 0 h-blocos)
     ;(gravidade tab b-aux h-blocos)
@@ -551,14 +585,14 @@
     ;(clear-tab tab (- (list-length (first problema)) 1) (- (list-length problema) 1))
     ;(print (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) h-blocos)) 
     ;(print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
-    ;(print (print-hash h-blocos))
+    (print (print-hash h-blocos))
     ;(maior-bloco estado-inicial h-blocos)
     (print "FIMMMMMMMMMMMM")
     estado-inicial)
 )
 
 
-(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 1 2) (1 1 1 1 1))
- "sondagem.iterativa"))
+;(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 1 2) (1 1 1 1 1))
+; "sondagem.iterativa"))
 
-
+(print (resolve-same-game '((1 10 10 10 8) (1 2 1 1 1) (1 10 1 10 2) (1 1 1 10 10)) "sondagem.iterativa"))

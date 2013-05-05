@@ -16,6 +16,43 @@
 (eval-when (compile) (declaim (optimize (speed 3) (safety 0) (debug 0))))
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;	DEFINICOES  DE CONSTANTES 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defconstant MAX-TEMPO 240) ;;Tempo limite de tempo para execução
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;	TEMPO
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;--------------------------------------------------------------------------;
+; Função que calcula tempo restante                                        ;
+;--------------------------------------------------------------------------;
+; ARG1 - tempo inicia                                                      ;
+; ARG2 - segundos passados                                                 ;
+;--------------------------------------------------------------------------;             
+(defun time-to-stop? (tempo-inicio n-segundos)
+        (<= (* n-segundos INTERNAL-TIME-UNITS-PER-SECOND) (- (get-start-time) tempo-inicio)))
+
+;--------------------------------------------------------------------------;
+; Função que retorna o tempo interno actual                                ;
+;--------------------------------------------------------------------------;
+; ARG1 - tempo inicia                                                      ;
+; ARG2 - segundos passados                                                 ;
+;--------------------------------------------------------------------------; 
+(defun get-start-time ()
+                (get-internal-run-time))
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	DEFINICOES  e  ESTRUTURAS  DE  DADOS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -52,6 +89,12 @@
   maior-bloco                 ; Tamanho do maior bloco
 )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                               
+;;   FUNCAO ESTADO-OBJECTIVO   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                                              
+(defun objectivo? (estado)
+        (eq 0 (no-n-pecas estado)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	DEBUG
@@ -91,10 +134,21 @@
 ; ARG1 - estado                                                       ;
 ;--------------------------------------------------------------------------;
 
-(defun sucessores (estado)
-  (print "OLLAAAAAAAAAA")
-  (print estado)
-)
+(defun gera-sucessores (estado)
+  (let* ((tabuleiro (no-tabuleiro estado))
+         (hash (no-h-blocos estado))
+         (nr-linhas (no-n-linhas estado))
+         (nr-colunas (no-n-colunas estado))
+         (lista()))
+    (print "~$$$$$$$$$$$$$$$$$")
+    (loop for key being the hash-keys of hash do     
+          (let ((novo-estado (copia-estado estado)))
+            ;; INSERIR AQUI CICLO DE RETIRAR PEÇA
+            (print "-------------------------")
+            (print (no-n-linhas novo-estado)) 
+            (print "-------------------------")
+            ))
+))
   
 
 
@@ -110,8 +164,8 @@
 
 
 (defun procura (estado sucessores heuristica)
-  (print sucessores)
-  (list sucessores)
+  (print "-----------------------------")
+  (print  sucessores)
   )
 
 
@@ -171,6 +225,29 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	FUNÇÔES AUXILIARES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;--------------------------------------------------------------------------;
+; Função que efectua a cópia de um estado                                  ;
+;--------------------------------------------------------------------------;
+; ARG1 - estado                                                              ;
+;--------------------------------------------------------------------------;
+
+
+(defun copia-estado (estado)
+                (make-no        :tabuleiro (copy-list (get-tabuleiro estado))
+                                :hash (no-h-blocos estado)
+                                :pontuacao (no-pontuacao estado)
+                                :n-pecas (no-n-pecas estado)
+                                :n-blocos (no-n-blocos estado)
+                                :n-linhas (no-n-linhas estado)
+                                :n-colunas (no-n-colunas estado)
+                                :maior-bloco 0))
+                                                                      
+
+
+
 
 ;--------------------------------------------------------------------------;
 ; Função que limpa a hash                                                  ;
@@ -552,7 +629,7 @@
          (h-blocos (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
          (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0))
          (b-aux (gethash 0 h-blocos))
-         (gera-sucessores	#'sucessores)
+        ; (g-sucessores	#'gera-sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
         ; (heuristica-opt	#'heur-menor-altura)
@@ -561,13 +638,13 @@
 
     (setf resul
           (cond ((string-equal algoritmo "melhor.abordagem")
-                 (procura estado-inicial gera-sucessores heuristica1))
+                 (procura estado-inicial (list #'gera-sucessores) heuristica1))
 
                 ((string-equal algoritmo "a*.melhor.heuristica")
-                 (procura estado-inicial gera-sucessores heuristica1))
+                 (procura estado-inicial g-sucessores heuristica1))
 
                 ((string-equal algoritmo "a*.melhor.heuristica.alternativa")
-                 (procura estado-inicial gera-sucessores heuristica2))
+                 (procura estado-inicial g-sucessores heuristica2))
 
                 ((string-equal algoritmo "sondagem.iterativa")
                  (sondagem-iterativa estado-inicial))
@@ -595,4 +672,4 @@
 ;(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 1 2) (1 1 1 1 1))
 ; "sondagem.iterativa"))
 
-(print (resolve-same-game '((1 10 10 10 8) (1 2 1 1 1) (1 10 1 10 2) (1 1 1 10 10)) "sondagem.iterativa"))
+(print (resolve-same-game '((1 10 10 10 8) (1 2 1 1 1) (1 10 1 10 2) (1 1 1 10 10)) "melhor.abordagem"))

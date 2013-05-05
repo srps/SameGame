@@ -485,19 +485,22 @@
     (print "entrou: lista-blocos")
     (loop for posy from y-ini to y-fin do
           (loop for posx from x-ini to x-fin do
-                (setq p-aux (nth posx (nth posy tabuleiro)))
-                (if (= (peca-bloco p-aux) -1)                                                                                                                 ; Vê se a peça já está num bloco                          
-                    (progn                                                                                                                                    ; Se não estiver num bloco
-                      (setf (peca-bloco p-aux) contador)                                                                                                      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                      (setq b-aux (make-bloco :cor (peca-cor p-aux) :lista-pecas (list p-aux) :id contador :x-min posx :x-max posx :y-min posy :y-max posy))  ;; Cria um bloco para a peça
-                      (setf (gethash (peca-bloco p-aux) resul) b-aux)                                                                                         ;; coloca-a no bloco
-                      (setf (nth posx (nth posy tabuleiro)) p-aux)                                                                                            ;; e guarda o bloco para referência
-                      (incf contador))
-                  (setf b-aux (gethash (peca-bloco p-aux) resul)))
-                (if (not (>= posx (- n-col 1)))                                                               ; Estou na última coluna do tabuleiro?
-                    (ve-frente tabuleiro p-aux b-aux posx posy resul))                                        ; --Se não, verifica bloco à direita
-                (if (not (>= posy (- n-lin 1)))                                                               ; Estou na última linha do tabuleiro?                                                                                   
-                    (ve-abaixo tabuleiro p-aux b-aux posx posy resul))))                                      ; --Se não, verifica bloco em baixo
+                (if (not (eq (nth posx (nth posy tabuleiro)) nil))
+                    (progn      
+                      (setq p-aux (nth posx (nth posy tabuleiro)))
+                      (if (= (peca-bloco p-aux) -1)                                                                                                                 ; Vê se a peça já está num bloco                          
+                          (progn                                                                                                                                    ; Se não estiver num bloco
+                            (setf (peca-bloco p-aux) contador)                                                                                                      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                            (setq b-aux (make-bloco :cor (peca-cor p-aux) :lista-pecas (list p-aux) :id contador :x-min posx :x-max posx :y-min posy :y-max posy))  ;; Cria um bloco para a peça
+                            (setf (gethash (peca-bloco p-aux) resul) b-aux)                                                                                         ;; coloca-a no bloco
+                            (setf (nth posx (nth posy tabuleiro)) p-aux)                                                                                            ;; e guarda o bloco para referência
+                            (incf contador))
+                        (setf b-aux (gethash (peca-bloco p-aux) resul)))
+                      (if (and (not (>= posx (- n-col 1)))                                                          ; Estou na última coluna do tabuleiro?
+                               (not (eq (nth (+ posx 1) (nth posy tabuleiro)) nil)))                                ; A peça à frente existe?
+                          (ve-frente tabuleiro p-aux b-aux posx posy resul))                                        ; --Se não, verifica bloco à direita
+                      (if (not (>= posy (- n-lin 1)))                                                               ; Estou na última linha do tabuleiro?                                                                                   
+                          (ve-abaixo tabuleiro p-aux b-aux posx posy resul))))))                                    ; --Se não, verifica bloco em baixo
     resul))
  
 
@@ -590,20 +593,20 @@
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-dir)))
     ;(print "entrou: ve-frente")
-    (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
-        (if (= -1 chave-b2)
-            (progn
+        (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
+            (if (= -1 chave-b2)
+                (progn
               ;(format t "Right Match On: posx: ~D posy: ~D ~% " posx posy)
-              (setf (peca-bloco p-dir) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
-              (setf (nth (+ posx 1) (nth posy tabuleiro)) p-dir)                      ; Coloca a peça atualizada no tabuleiro
-              (setq l-aux (append l-aux (list p-dir)))                                ; Adiciona a peça à lista para atualizar o bloco
-              (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) ht)) l-aux)        ; Atualiza o bloco na hash
-              (setf (bloco-x-max (gethash (peca-bloco p-dir) ht)) (+ posx 1)))        ; Incrementa O xmax do bloco     
-          (if (not (= chave-b1 chave-b2))
-              (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
-                      (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
-                  (junta-blocos tabuleiro ht chave-b1 chave-b2)
-                (junta-blocos tabuleiro ht chave-b2 chave-b1)))))))
+                  (setf (peca-bloco p-dir) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
+                  (setf (nth (+ posx 1) (nth posy tabuleiro)) p-dir)                      ; Coloca a peça atualizada no tabuleiro
+                  (setq l-aux (append l-aux (list p-dir)))                                ; Adiciona a peça à lista para atualizar o bloco
+                  (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) ht)) l-aux)        ; Atualiza o bloco na hash
+                  (setf (bloco-x-max (gethash (peca-bloco p-dir) ht)) (+ posx 1)))        ; Incrementa O xmax do bloco     
+              (if (not (= chave-b1 chave-b2))
+                  (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
+                          (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
+                      (junta-blocos tabuleiro ht chave-b1 chave-b2)
+                    (junta-blocos tabuleiro ht chave-b2 chave-b1)))))))
 
 
 ;----------------------------------------------------------------------;

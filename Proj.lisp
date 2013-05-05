@@ -265,7 +265,7 @@
 
 
 (defun copia-estado (estado)
-  (make-no        :tabuleiro (copy-list (no-tabuleiro estado))
+  (make-no        :tabuleiro (cria-tabuleiro (print-tabuleiro (no-tabuleiro estado) (no-n-linhas estado) (no-n-colunas estado)) (no-n-colunas estado))
                   :h-blocos (copy-hash (no-h-blocos estado))
                   :pontuacao (no-pontuacao estado)
                   :n-pecas (no-n-pecas estado)

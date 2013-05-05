@@ -140,15 +140,25 @@
          (nr-linhas (no-n-linhas estado))
          (nr-colunas (no-n-colunas estado))
          (lista()))
-    (print "~$$$$$$$$$$$$$$$$$")
     (loop for key being the hash-keys of hash do     
-          (let ((novo-estado (copia-estado estado)))
-            ;; INSERIR AQUI CICLO DE RETIRAR PEÇA
-            (print "-------------------------")
-            (print (no-n-linhas novo-estado)) 
-            (print "-------------------------")
+          (let* ((novo-estado (copia-estado estado))
+                 (b-aux (gethash key (no-h-blocos novo-estado))))
+            (print novo-estado)
+             (print (print-tabuleiro (no-tabuleiro novo-estado) 4 4))
+            (remove-bloco novo-estado key (no-h-blocos novo-estado))
+            (gravidade (no-tabuleiro novo-estado) b-aux (no-h-blocos novo-estado))
+            (encosta-esquerda novo-estado (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
+            (print "--------------------------")
+            (print (no-n-colunas novo-estado))
+            (print (no-n-linhas novo-estado))
+            (setf (no-h-blocos novo-estado) (lista-blocos (no-tabuleiro novo-estado) 0 (- (no-n-colunas novo-estado) 1) 0 (- (no-n-linhas novo-estado) 1) (no-n-linhas novo-estado) (no-n-colunas novo-estado) (no-h-blocos novo-estado)))
+            (maior-bloco novo-estado (no-h-blocos novo-estado))
+            (print "HASH ANTIGA")
+            (print (print-hash hash))
+            (print "HASH NOVA")
+            (print (print-hash (no-h-blocos novo-estado)))
             ))
-))
+    ))
   
 
 
@@ -164,8 +174,7 @@
 
 
 (defun procura (estado sucessores heuristica)
-  (print "-----------------------------")
-  (print  sucessores)
+  (funcall #'gera-sucessores estado)
   )
 
 
@@ -226,6 +235,15 @@
 ;;	FUNÇÔES AUXILIARES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun copy-hash (hash)
+  (let* ((new-hash (make-hash-table)))
+    (loop for key being the hash-keys of hash do     
+          (setf (gethash key new-hash) (gethash key hash)))
+    new-hash) 
+)
+  
+
+
 ;--------------------------------------------------------------------------;
 ; Função que devolve a maior chave da hash table                           ;
 ;--------------------------------------------------------------------------;
@@ -248,7 +266,7 @@
 
 (defun copia-estado (estado)
   (make-no        :tabuleiro (copy-list (no-tabuleiro estado))
-                  :hash (no-h-blocos estado)
+                  :h-blocos (copy-hash (no-h-blocos estado))
                   :pontuacao (no-pontuacao estado)
                   :n-pecas (no-n-pecas estado)
                   :n-blocos (no-n-blocos estado)
@@ -580,7 +598,7 @@
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
          (h-blocos (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
          (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0))
-         (b-aux (gethash 0 h-blocos))
+         ;(b-aux (gethash 0 h-blocos))
         ; (g-sucessores	#'gera-sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
@@ -604,17 +622,17 @@
                 ((string-equal algoritmo "abordagem.alternativa")
                  (procura-alternativa estado-inicial gera-sucessores heuristica1))))
 
-    (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
-    (print (print-hash h-blocos))
-    (maior-bloco estado-inicial h-blocos) 
-    (remove-bloco estado-inicial 0 h-blocos)
-    (gravidade tab b-aux h-blocos)
-    (encosta-esquerda estado-inicial tab h-blocos)
-    (print (print-hash h-blocos))
-    (print (lista-blocos tab 0 (- (no-n-colunas estado-inicial) 1) 0 (- (no-n-linhas estado-inicial) 1) (no-n-linhas estado-inicial) (no-n-colunas estado-inicial) h-blocos)) 
-    (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
-    (print (print-hash h-blocos))
-    (maior-bloco estado-inicial h-blocos)
+    ;(print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
+    ;(print (print-hash h-blocos))
+    ;(maior-bloco estado-inicial h-blocos) 
+    ;(remove-bloco estado-inicial 0 h-blocos)
+    ;(gravidade tab b-aux h-blocos)
+    ;(encosta-esquerda estado-inicial tab h-blocos)
+    ;(print (print-hash h-blocos))
+    ;(print (lista-blocos tab 0 (- (no-n-colunas estado-inicial) 1) 0 (- (no-n-linhas estado-inicial) 1) (no-n-linhas estado-inicial) (no-n-colunas estado-inicial) h-blocos)) 
+    ;(print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
+    ;(print (print-hash h-blocos))
+    ;(maior-bloco estado-inicial h-blocos)
     (print "FIMMMMMMMMMMMM")
     estado-inicial)
 )

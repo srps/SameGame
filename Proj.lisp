@@ -524,7 +524,9 @@
     (print "entrou: cria-tabuleiro")
     (loop for linha in tabuleiro do
           (loop for coluna in linha do
-                (setq p-aux (make-peca :pos (cons posx posy) :cor coluna :bloco -1))
+                (if (= coluna -1)
+                    (setq p-aux nil)
+                  (setq p-aux (make-peca :pos (cons posx posy) :cor coluna :bloco -1)))
                 (setq l-aux (append l-aux (list p-aux)))
                 (if (not (= posx (- n-col 1)))                                       ; Avança no Y caso não esteja no final da linha
                     (incf posx)               
@@ -532,7 +534,7 @@
                     (setq resul (append resul (list l-aux)))
                     (setq l-aux (list))
                     (setf posx 0)          
-                (incf posy)))))
+                    (incf posy)))))
                 resul))
                       
 ;--------------------------------------------;
@@ -650,7 +652,7 @@
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
          (h-blocos (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
          (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0))
-         (b-aux (gethash 0 h-blocos))
+         (b-aux (gethash 1 h-blocos))
         ; (g-sucessores	#'gera-sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
@@ -677,7 +679,7 @@
     (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
     (print (print-hash h-blocos))
     (maior-bloco estado-inicial h-blocos) 
-    (remove-bloco estado-inicial 0 h-blocos)
+    (remove-bloco estado-inicial 1 h-blocos)
     (gravidade tab b-aux h-blocos)
     (print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
     (encosta-esquerda estado-inicial tab h-blocos)

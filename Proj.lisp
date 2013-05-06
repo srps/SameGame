@@ -141,17 +141,19 @@
     (loop for key being the hash-keys of hash do     
           (let* ((novo-estado (copia-estado estado))
                  (b-aux (gethash key (no-h-blocos novo-estado))))
-            (print "$$$$$$$$$$$$$$$$$$$$$")
-
-(print (no-tabuleiro novo-estado))
-            (print (print-hash (no-h-blocos novo-estado)))
+            (print "$$$$$$$$$$$$$$$$$$$$")
+            (print (print-hash hash))
+            (print (print-tabuleiro (no-tabuleiro novo-estado) (no-n-linhas novo-estado) (no-n-colunas novo-estado)))
             (atualiza-tabuleiro (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
-            ;(print (no-tabuleiro novo-estado))
+                   
+            ;(print (print-tabuleiro (no-tabuleiro novo-estado) (no-n-linhas novo-estado) (no-n-colunas novo-estado)))
             (remove-bloco novo-estado key (no-h-blocos novo-estado))
-           
+            
             (gravidade (no-tabuleiro novo-estado) b-aux (no-h-blocos novo-estado))
-                   (print (print-hash hash))
+             (print "#############")
+            (print (print-hash hash))
             (encosta-esquerda novo-estado (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
+            (print (print-hash (no-h-blocos novo-estado)))
             (setf (no-h-blocos novo-estado) (lista-blocos (no-tabuleiro novo-estado) 0 (- (no-n-colunas novo-estado) 1) 0 (- (no-n-linhas novo-estado) 1) (no-n-linhas novo-estado) (no-n-colunas novo-estado) (no-h-blocos novo-estado)))
             (maior-bloco novo-estado (no-h-blocos novo-estado))
             (print "HASH ANTIGA")
@@ -243,7 +245,10 @@
           (loop for p-aux in (bloco-lista-pecas bl) do
                 (print p-aux)
                 (setq pos (peca-pos p-aux))
-                (setf (nth (car pos) (nth (cdr pos) tabuleiro)) p-aux)))))
+                (setf (nth (car pos) (nth (cdr pos) tabuleiro)) p-aux)
+                ;(print "----------------------------------------------------------------------------")
+                ;(print tabuleiro)
+                ))))
 
 ;--------------------------------------------------------------------------;
 ; Função que cria uma hash table nova a partir de uma existente            ;
@@ -258,9 +263,9 @@
          (p-aux)
          (novo-bloco))
     (loop for key being the hash-keys of hash do     
-          (setf b-aux (gethash key hash))
+          (setq b-aux (gethash key hash))
           (loop for p-ant in (bloco-lista-pecas b-aux) do
-                (setq p-aux (make-peca :pos (peca-pos p-ant)
+                (setq p-aux (make-peca :pos (cons (car (peca-pos p-ant)) (cdr (peca-pos p-ant)))
                                        :cor (peca-cor p-ant)
                                        :bloco (peca-bloco p-ant)))
                 (setf l-aux (append l-aux (list p-aux))))
@@ -679,7 +684,7 @@
         ; (heuristica-opt	#'heur-menor-altura)
          resul solucao)
 
-    (print tab)
+    (print (print-hash h-blocos))
     (setf resul
           (cond ((string-equal algoritmo "melhor.abordagem")
                  (procura estado-inicial (list #'gera-sucessores) heuristica1))

@@ -101,8 +101,8 @@
 (defun print-tabuleiro (tabuleiro n-lin n-col)
   (let* ((result '())
          (temp-list '()))
-    (loop for posy from 0 to n-lin do
-          (loop for posx from 0 to n-col do
+    (loop for posy from 0 to (- n-lin 1) do
+          (loop for posx from 0 to (- n-col 1) do
                 (if (not (eq nil (nth posx (nth posy tabuleiro))))
                 (setq temp-list (append temp-list (list (peca-cor (nth posx (nth posy tabuleiro))))))
                  (setq temp-list (append temp-list (list -1)))) ; Caso Não exista peça coloca -1
@@ -110,7 +110,7 @@
           (setq result (append result (list temp-list)))
           (setf temp-list '())
            )
-  result)
+  (print result))
 )
 
 (defun print-hash (hash)
@@ -156,6 +156,8 @@
             (print (print-hash (no-h-blocos novo-estado)))
             (setf (no-h-blocos novo-estado) (lista-blocos (no-tabuleiro novo-estado) 0 (- (no-n-colunas novo-estado) 1) 0 (- (no-n-linhas novo-estado) 1) (no-n-linhas novo-estado) (no-n-colunas novo-estado) (no-h-blocos novo-estado)))
             (maior-bloco novo-estado (no-h-blocos novo-estado))
+            (print "//////////////////////")
+            (print (no-tabuleiro novo-estado))
             (print "HASH ANTIGA")
             (print (print-hash hash))
             (print "HASH NOVA")
@@ -540,7 +542,13 @@
                         (setf b-aux (gethash (peca-bloco p-aux) resul)))
                       (if (and (not (>= posx (- n-col 1)))                                                          ; Estou na última coluna do tabuleiro?
                                (not (eq (nth (+ posx 1) (nth posy tabuleiro)) nil)))                                ; A peça à frente existe?
-                          (ve-frente tabuleiro p-aux b-aux posx posy resul))                                        ; --Se não, verifica bloco à direita
+                          (progn
+                            (print "9847542524589758975")
+                            (print posx)
+                            (print (nth posx (nth posy tabuleiro)))
+                            (print (nth (+ posx 1) (nth posy tabuleiro)))
+                            (print (print-hash hash))
+                            (ve-frente tabuleiro p-aux b-aux posx posy resul)))                                        ; --Se não, verifica bloco à direita
                       (if (not (>= posy (- n-lin 1)))                                                               ; Estou na última linha do tabuleiro?                                                                                   
                           (ve-abaixo tabuleiro p-aux b-aux posx posy resul))))))                                    ; --Se não, verifica bloco em baixo
     resul))
@@ -619,7 +627,9 @@
          (p-dir (nth (+ posx 1) (nth posy tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-dir)))
-    ;(print "entrou: ve-frente")
+    (print "entrou: ve-frente")
+    (print posx)
+    (print posy)
         (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
             (if (= -1 chave-b2)
                 (progn

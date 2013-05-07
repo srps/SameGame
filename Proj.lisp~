@@ -105,22 +105,19 @@
           (loop for posx from 0 to (- n-col 1) do
                 (if (not (eq nil (nth posx (nth posy tabuleiro))))
                 (setq temp-list (append temp-list (list (peca-cor (nth posx (nth posy tabuleiro))))))
-                 (setq temp-list (append temp-list (list -1)))) ; Caso Não exista peça coloca -1
-                )
+                 (setq temp-list (append temp-list (list -1))))) ; Caso Não exista peça coloca -1
           (setq result (append result (list temp-list)))
-          (setf temp-list '())
-           )
-  (print result))
-)
+          (setf temp-list '()))
+  (print result)))
 
 (defun print-hash (hash)
   (let* ((b-aux (make-bloco)))
  (loop for key being the hash-keys of hash do
        (setf b-aux (gethash key hash))
-       (format t "~% Key: ~D Cor Bloco: ~D Numero De Peças: ~D Xmin: ~D Xmax: ~D Ymin: ~D Ymax: ~D Lista Peças: ~A" key (bloco-cor b-aux) (list-length (bloco-lista-pecas b-aux)) (bloco-x-min b-aux) (bloco-x-max b-aux) (bloco-y-min b-aux) (bloco-y-max b-aux) (bloco-lista-pecas b-aux))
-       )
- )
-)
+       (format t "~% Key: ~D Cor Bloco: ~D Numero De Peças: ~D Xmin: ~D Xmax: ~D Ymin: ~D Ymax: ~D Lista Peças: ~A" 
+               key (bloco-cor b-aux) (list-length (bloco-lista-pecas b-aux)) 
+               (bloco-x-min b-aux) (bloco-x-max b-aux) (bloco-y-min b-aux) 
+               (bloco-y-max b-aux) (bloco-lista-pecas b-aux)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	SUCESSORES
@@ -130,6 +127,8 @@
 ; Função que gera sucessores                                               ;
 ;--------------------------------------------------------------------------;
 ; ARG1 - estado                                                            ;
+;--------------------------------------------------------------------------;
+; RET  - Devolve a lista com os estados sucessores                         ;
 ;--------------------------------------------------------------------------;
 
 (defun gera-sucessores (estado)
@@ -141,29 +140,35 @@
     (loop for key being the hash-keys of hash do     
           (let* ((novo-estado (copia-estado estado))
                  (b-aux (gethash key (no-h-blocos novo-estado))))
+            (if (>= (list-length (bloco-lista-pecas b-aux)) 2)
+                (progn
             ;(print "$$$$$$$$$$$$$$$$$$$$")
             ;(print (print-hash hash))
             ;(print (print-tabuleiro (no-tabuleiro novo-estado) (no-n-linhas novo-estado) (no-n-colunas novo-estado)))
-            (atualiza-tabuleiro (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
+                  (atualiza-tabuleiro (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
                    
             ;(print (print-tabuleiro (no-tabuleiro novo-estado) (no-n-linhas novo-estado) (no-n-colunas novo-estado)))
-            (remove-bloco novo-estado key (no-h-blocos novo-estado))
+                  (remove-bloco novo-estado key (no-h-blocos novo-estado))
             
-            (gravidade (no-tabuleiro novo-estado) b-aux (no-h-blocos novo-estado))
+                  (let* ((l-margens
+                          (gravidade (no-tabuleiro novo-estado) b-aux (no-h-blocos novo-estado))))
             ;(print "#############")
             ;(print (print-hash hash))
-            (encosta-esquerda novo-estado (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
+                    (encosta-esquerda novo-estado (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
             ;(print (print-hash (no-h-blocos novo-estado)))
-            (setf (no-h-blocos novo-estado) (lista-blocos (no-tabuleiro novo-estado) 0 (- (no-n-colunas novo-estado) 1) 0 (- (no-n-linhas novo-estado) 1) (no-n-linhas novo-estado) (no-n-colunas novo-estado) (no-h-blocos novo-estado)))
-            (maior-bloco novo-estado (no-h-blocos novo-estado))
-            (push novo-estado lista)
+                    (setf (no-h-blocos novo-estado) (lista-blocos (no-tabuleiro novo-estado) 
+                                                                  (first l-margens) (second l-margens) 
+                                                                  0 (third l-margens) 
+                                                                  (no-n-linhas novo-estado) (no-n-colunas novo-estado) (no-h-blocos novo-estado))))
+                  (maior-bloco novo-estado (no-h-blocos novo-estado))
+                  (push novo-estado lista)
             ;(print "//////////////////////")
             ;(print (no-tabuleiro novo-estado))
             ;(print "HASH ANTIGA")
             ;(print (print-hash hash))
             ;(print "HASH NOVA")
             ;(print (print-hash (no-h-blocos novo-estado)))
-            ))
+            ))))
     lista))
   
 
@@ -180,12 +185,10 @@
 
 
 (defun procura (estado sucessores heuristica)
-  (funcall #'gera-sucessores estado)
-  )
+  (funcall #'gera-sucessores estado))
 
 
-(defun procura-alternativa (estado sucessores heuristica)
-)
+(defun procura-alternativa (estado sucessores heuristica))
 
 (defun sondagem-iterativa(estado-inicial)
   (let* (	
@@ -259,7 +262,7 @@
 ; ARG1 - Hash Table                                                        ;
 ;--------------------------------------------------------------------------;
 
-(defun copy-hash (hash)
+(defun copia-hash (hash)
   (let* ((new-hash (make-hash-table))
          (b-aux (make-bloco))
          (l-aux (list))
@@ -309,7 +312,7 @@
 
 (defun copia-estado (estado)
   (make-no        :tabuleiro (cria-tabuleiro-novo (no-n-linhas estado) (no-n-colunas estado))
-                  :h-blocos (copy-hash (no-h-blocos estado))
+                  :h-blocos (copia-hash (no-h-blocos estado))
                   :pontuacao (no-pontuacao estado)
                   :n-pecas (no-n-pecas estado)
                   :n-blocos (no-n-blocos estado)
@@ -364,6 +367,8 @@
 ; ARG2 - Bloco que foi removido (fornece as coordenadas)                   ;
 ; ARG3 - Hash table                                                        ;
 ;--------------------------------------------------------------------------;
+; RET  - Lista com x-min, x-max e y-max dos blocos que removeu             ;  
+;--------------------------------------------------------------------------;
 
 (defun gravidade (tabuleiro bloco ht)
   (let* ((x-ini (bloco-x-min bloco))
@@ -386,7 +391,9 @@
                           (if (not (eq b-aux NIL))
                               (progn
                                 (if (< (bloco-x-min b-aux) (first resul))
-                                    (setf (first resul) (bloco-x-min b-aux)))
+                                    (if (= (bloco-x-min b-aux) 0)
+                                        (setf (first resul) (bloco-x-min b-aux))
+                                      (setf (first resul) (- (bloco-x-min b-aux) 1))))
                                 (if (> (bloco-x-max b-aux) (second resul))
                                     (setf (second resul) (bloco-x-max b-aux)))    
                                 (if (> (bloco-y-max b-aux) (third resul))

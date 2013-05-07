@@ -137,37 +137,24 @@
          (nr-linhas (no-n-linhas estado))
          (nr-colunas (no-n-colunas estado))
          (lista()))
+    (print "SUCESSORES")
+    (print (print-hash hash))
     (loop for key being the hash-keys of hash do     
           (let* ((novo-estado (copia-estado estado))
                  (b-aux (gethash key (no-h-blocos novo-estado))))
             (if (>= (list-length (bloco-lista-pecas b-aux)) 2)
                 (progn
-            ;(print "$$$$$$$$$$$$$$$$$$$$")
-            ;(print (print-hash hash))
-            ;(print (print-tabuleiro (no-tabuleiro novo-estado) (no-n-linhas novo-estado) (no-n-colunas novo-estado)))
                   (atualiza-tabuleiro (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
-                   
-            ;(print (print-tabuleiro (no-tabuleiro novo-estado) (no-n-linhas novo-estado) (no-n-colunas novo-estado)))
                   (remove-bloco novo-estado key (no-h-blocos novo-estado))
-            
                   (let* ((l-margens
                           (gravidade (no-tabuleiro novo-estado) b-aux (no-h-blocos novo-estado))))
-            ;(print "#############")
-            ;(print (print-hash hash))
                     (encosta-esquerda novo-estado (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
-            ;(print (print-hash (no-h-blocos novo-estado)))
                     (setf (no-h-blocos novo-estado) (lista-blocos (no-tabuleiro novo-estado) 
                                                                   (first l-margens) (second l-margens) 
                                                                   0 (third l-margens) 
                                                                   (no-n-linhas novo-estado) (no-n-colunas novo-estado) (no-h-blocos novo-estado))))
                   (maior-bloco novo-estado (no-h-blocos novo-estado))
                   (push novo-estado lista)
-            ;(print "//////////////////////")
-            ;(print (no-tabuleiro novo-estado))
-            ;(print "HASH ANTIGA")
-            ;(print (print-hash hash))
-            ;(print "HASH NOVA")
-            ;(print (print-hash (no-h-blocos novo-estado)))
             ))))
     lista))
   
@@ -184,8 +171,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defun procura (estado sucessores heuristica)
-  (funcall #'gera-sucessores estado))
+(defun procura-tabuleiro (estado sucessores heuristica)
+  (print (funcall #'gera-sucessores estado))
+  )
+
 
 
 (defun procura-alternativa (estado sucessores heuristica))
@@ -208,7 +197,7 @@
 		;	(tempo-melhor tempo-inicio)
          )
 		 
-    (print ngerados)
+   ; (print ngerados)
     (loop while (> tempo-limite (get-internal-run-time)) do
 		;	(if (car (setf resultado (chama-procura estado-inicial #'sucessores-sondagem nil "profundidade")))
 		;		(let ((altura (maior-altura (estado-colocadas (resultado-solucao resultado)))))
@@ -246,10 +235,9 @@
 
 (defun atualiza-tabuleiro (tabuleiro ht)
   (let* ((pos))
-    (print "entrou: atualiza-tabuleiro")
+    ;(print "entrou: atualiza-tabuleiro")
     (loop for bl being the hash-values of ht do
           (loop for p-aux in (bloco-lista-pecas bl) do
-                (print p-aux)
                 (setq pos (peca-pos p-aux))
                 (setf (nth (car pos) (nth (cdr pos) tabuleiro)) p-aux)
                 ;(print "----------------------------------------------------------------------------")
@@ -379,7 +367,7 @@
          (b-aux (make-bloco))
          (contador 0)
          (resul (list x-ini x-fin y-ini)))                                                   ; Para evitar ver peças desnecessárias no lista-blocos
-    (print "entrou: gravidade")                                                              ; --Y min não interessa porque as peças caem 
+    ;(print "entrou: gravidade")                                                              ; --Y min não interessa porque as peças caem 
     (loop for coluna from x-ini to x-fin do
           (loop for linha from y-ini downto 0 do
                 (setq p-aux (nth coluna (nth linha tabuleiro)))
@@ -425,7 +413,7 @@
          (y-ini (- (list-length tabuleiro) 1))
          (p-aux)
          (contador 0))
-    (print "entrou: encosta-esquerda")
+    ;(print "entrou: encosta-esquerda")
     (loop for coluna from 0 to x-fin do
           (if (eq (nth coluna (nth y-ini tabuleiro)) NIL)
               (incf contador)                                                                         ; Se for uma posição vazia, incrementa o contador
@@ -438,7 +426,6 @@
                             (setf (nth coluna (nth linha tabuleiro)) NIL)                             ; Atualiza o tabuleiro
                             (setf (nth (- coluna contador) (nth linha tabuleiro)) p-aux))             ; Atualiza o tabuleiro
                         (return))))))                                                                 ; Quando vê NIL, salta para a próxima coluna
-    (print contador)
     (setf (no-n-colunas estado) (- (no-n-colunas estado) contador))
     contador))      
 
@@ -502,7 +489,7 @@
          (p-aux)
          (b-aux)
          (contador (+ (ve-maior-hash hash) 1)))
-    (print "entrou: lista-blocos")
+    ;(print "entrou: lista-blocos")
     (loop for posy from y-ini to y-fin do
           (loop for posx from x-ini to x-fin do
                 (if (not (eq (nth posx (nth posy tabuleiro)) nil))
@@ -541,7 +528,7 @@
          (posx 0)
          (posy 0)
          (l-aux (list)))
-    (print "entrou: cria-tabuleiro")
+    ;(print "entrou: cria-tabuleiro-novo")
     (loop for linha from 0 to (- n-lin 1) do
           (loop for coluna from 0 to (- n-col 1) do
                 (setq l-aux (append l-aux (list NIL))))
@@ -563,7 +550,7 @@
          (posy 0)
          (p-aux)
          (l-aux (list)))
-    (print "entrou: cria-tabuleiro")
+    ;(print "entrou: cria-tabuleiro")
     (loop for linha in tabuleiro do
           (loop for coluna in linha do
                 (if (= coluna -1)
@@ -597,23 +584,21 @@
          (p-dir (nth (+ posx 1) (nth posy tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-dir)))
-    (print "entrou: ve-frente")
-    (print posx)
-    (print posy)
-        (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
-            (if (= -1 chave-b2)
-                (progn
+    ;(print "entrou: ve-frente")
+    (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
+        (if (= -1 chave-b2)
+            (progn
               ;(format t "Right Match On: posx: ~D posy: ~D ~% " posx posy)
-                  (setf (peca-bloco p-dir) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
-                  (setf (nth (+ posx 1) (nth posy tabuleiro)) p-dir)                      ; Coloca a peça atualizada no tabuleiro
-                  (setq l-aux (append l-aux (list p-dir)))                                ; Adiciona a peça à lista para atualizar o bloco
-                  (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) ht)) l-aux)        ; Atualiza o bloco na hash
-                  (setf (bloco-x-max (gethash (peca-bloco p-dir) ht)) (+ posx 1)))        ; Incrementa O xmax do bloco     
-              (if (not (= chave-b1 chave-b2))
-                  (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
-                          (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
-                      (junta-blocos tabuleiro ht chave-b1 chave-b2)
-                    (junta-blocos tabuleiro ht chave-b2 chave-b1)))))))
+              (setf (peca-bloco p-dir) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
+              (setf (nth (+ posx 1) (nth posy tabuleiro)) p-dir)                      ; Coloca a peça atualizada no tabuleiro
+              (setq l-aux (append l-aux (list p-dir)))                                ; Adiciona a peça à lista para atualizar o bloco
+              (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) ht)) l-aux)        ; Atualiza o bloco na hash
+              (setf (bloco-x-max (gethash (peca-bloco p-dir) ht)) (+ posx 1)))        ; Incrementa O xmax do bloco     
+          (if (not (= chave-b1 chave-b2))
+              (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
+                      (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
+                  (junta-blocos tabuleiro ht chave-b1 chave-b2)
+                (junta-blocos tabuleiro ht chave-b2 chave-b1)))))))
 
 
 ;----------------------------------------------------------------------;
@@ -632,7 +617,7 @@
          (p-baixo (nth posx (nth (+ posy 1) tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-baixo)))
-    (print "entrou: ve-abaixo")
+    ;(print "entrou: ve-abaixo")
     (if (= (peca-cor p-aux) (peca-cor p-baixo))                                             ; Se o da frente for igual
         (if (= -1 chave-b2)
                 (progn
@@ -667,36 +652,27 @@
     (print (print-hash h-blocos))
     (setf resul
           (cond ((string-equal algoritmo "melhor.abordagem")
-                 (procura estado-inicial (list #'gera-sucessores) heuristica1))
+                 (procura-tabuleiro estado-inicial (list #'gera-sucessores) heuristica1))
 
                 ((string-equal algoritmo "a*.melhor.heuristica")
-                 (procura estado-inicial g-sucessores heuristica1))
+                 (setf solucao (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0)) "a*" :espaco-em-arvore? T)))
 
                 ((string-equal algoritmo "a*.melhor.heuristica.alternativa")
-                 (procura estado-inicial g-sucessores heuristica2))
+                 (procura-tabuleiro estado-inicial g-sucessores heuristica2))
 
                 ((string-equal algoritmo "sondagem.iterativa")
                  (sondagem-iterativa estado-inicial))
 
                 ((string-equal algoritmo "abordagem.alternativa")
                  (procura-alternativa estado-inicial gera-sucessores heuristica1))))
+    (print "FIM")
+    (print solucao)
 
-    ;(print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
-    ;(print (print-hash h-blocos))
-    ;(maior-bloco estado-inicial h-blocos) 
-    ;(remove-bloco estado-inicial 0 h-blocos)
-    ;(gravidade tab b-aux h-blocos)
-    ;(encosta-esquerda estado-inicial tab h-blocos)
-    ;(print (print-hash h-blocos))
-    ;(print (lista-blocos tab 0 (- (no-n-colunas estado-inicial) 1) 0 (- (no-n-linhas estado-inicial) 1) (no-n-linhas estado-inicial) (no-n-colunas estado-inicial) h-blocos)) 
-    ;(print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
-    ;(print (print-hash h-blocos))
-    ;(maior-bloco estado-inicial h-blocos)
-    ;(print "FIMMMMMMMMMMMM")
+  
     estado-inicial))
 
 
 ;(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 1 2) (1 1 1 1 1))
 ; "sondagem.iterativa"))
 
-(print (resolve-same-game '((1 10 10 10 8) (1 2 1 1 1) (1 10 1 10 2) (1 1 1 10 10)) "melhor.abordagem"))
+(print (resolve-same-game '((1 10 10 10 8) (1 2 1 1 1) (1 10 1 10 2) (1 1 1 10 10)) "a*.melhor.heuristica"))

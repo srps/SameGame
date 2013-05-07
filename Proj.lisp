@@ -57,7 +57,7 @@
 ;;	DEFINICOES  e  ESTRUTURAS  DE  DADOS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
+(defvar *max-result* 0)
 
 (defstruct peca
   pos                         ; posição da peça (x . y)
@@ -92,7 +92,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                               
 (defun objectivo? (estado)
-        (eq 0 (no-n-pecas estado)))
+  (eq *max-result -1))
+;(eq (no-n-blocos estado) (no-n-pecas estado)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	DEBUG
@@ -235,7 +236,7 @@
 
 (defun atualiza-tabuleiro (tabuleiro ht)
   (let* ((pos))
-    ;(print "entrou: atualiza-tabuleiro")
+    (print "entrou: atualiza-tabuleiro")
     (loop for bl being the hash-values of ht do
           (loop for p-aux in (bloco-lista-pecas bl) do
                 (setq pos (peca-pos p-aux))
@@ -346,7 +347,11 @@
     (setf (no-n-pecas estado) (- (no-n-pecas estado) (list-length l-aux)))
     (loop for p-aux in l-aux do
           (setq pos (peca-pos p-aux))
-          (setf (nth (car pos) (nth (cdr pos) (no-tabuleiro estado))) NIL))))
+          (setf (nth (car pos) (nth (cdr pos) (no-tabuleiro estado))) NIL))
+        (if (> (no-pontuacao estado) *max-result*)
+        (setf *max-result* (no-pontuacao estado)) 
+      )
+  ))
 
 ;--------------------------------------------------------------------------;
 ; Função que faz cair as peças consoante as leis da gravidade              ;
@@ -367,7 +372,7 @@
          (b-aux (make-bloco))
          (contador 0)
          (resul (list x-ini x-fin y-ini)))                                                   ; Para evitar ver peças desnecessárias no lista-blocos
-    ;(print "entrou: gravidade")                                                              ; --Y min não interessa porque as peças caem 
+    (print "entrou: gravidade")                                                              ; --Y min não interessa porque as peças caem 
     (loop for coluna from x-ini to x-fin do
           (loop for linha from y-ini downto 0 do
                 (setq p-aux (nth coluna (nth linha tabuleiro)))
@@ -413,7 +418,7 @@
          (y-ini (- (list-length tabuleiro) 1))
          (p-aux)
          (contador 0))
-    ;(print "entrou: encosta-esquerda")
+    (print "entrou: encosta-esquerda")
     (loop for coluna from 0 to x-fin do
           (if (eq (nth coluna (nth y-ini tabuleiro)) NIL)
               (incf contador)                                                                         ; Se for uma posição vazia, incrementa o contador
@@ -427,6 +432,8 @@
                             (setf (nth (- coluna contador) (nth linha tabuleiro)) p-aux))             ; Atualiza o tabuleiro
                         (return))))))                                                                 ; Quando vê NIL, salta para a próxima coluna
     (setf (no-n-colunas estado) (- (no-n-colunas estado) contador))
+    (print tabuleiro)
+    (print contador)
     contador))      
 
 
@@ -489,7 +496,7 @@
          (p-aux)
          (b-aux)
          (contador (+ (ve-maior-hash hash) 1)))
-    ;(print "entrou: lista-blocos")
+    (print "entrou: lista-blocos")
     (loop for posy from y-ini to y-fin do
           (loop for posx from x-ini to x-fin do
                 (if (not (eq (nth posx (nth posy tabuleiro)) nil))
@@ -528,7 +535,7 @@
          (posx 0)
          (posy 0)
          (l-aux (list)))
-    ;(print "entrou: cria-tabuleiro-novo")
+   (print "entrou: cria-tabuleiro-novo")
     (loop for linha from 0 to (- n-lin 1) do
           (loop for coluna from 0 to (- n-col 1) do
                 (setq l-aux (append l-aux (list NIL))))
@@ -550,7 +557,7 @@
          (posy 0)
          (p-aux)
          (l-aux (list)))
-    ;(print "entrou: cria-tabuleiro")
+    (print "entrou: cria-tabuleiro")
     (loop for linha in tabuleiro do
           (loop for coluna in linha do
                 (if (= coluna -1)
@@ -584,7 +591,7 @@
          (p-dir (nth (+ posx 1) (nth posy tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-dir)))
-    ;(print "entrou: ve-frente")
+    (print "entrou: ve-frente")
     (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
         (if (= -1 chave-b2)
             (progn
@@ -617,7 +624,7 @@
          (p-baixo (nth posx (nth (+ posy 1) tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-baixo)))
-    ;(print "entrou: ve-abaixo")
+    (print "entrou: ve-abaixo")
     (if (= (peca-cor p-aux) (peca-cor p-baixo))                                             ; Se o da frente for igual
         (if (= -1 chave-b2)
                 (progn
@@ -666,6 +673,8 @@
                 ((string-equal algoritmo "abordagem.alternativa")
                  (procura-alternativa estado-inicial gera-sucessores heuristica1))))
     (print "FIM")
+    (print *max-result*)
+    (setf *max-result* 0)
     (print solucao)
 
   
@@ -675,4 +684,10 @@
 ;(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 1 2) (1 1 1 1 1))
 ; "sondagem.iterativa"))
 
-(print (resolve-same-game '((1 10 10 10 8) (1 2 1 1 1) (1 10 1 10 2) (1 1 1 10 10)) "a*.melhor.heuristica"))
+;(print (resolve-same-game '((1 10 10 10 8) (1 2 1 1 1) (1 10 1 10 2) (1 1 1 10 10)) "a*.melhor.heuristica"))
+
+(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "a*.melhor.heuristica"))
+
+;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "a*.melhor.heuristica"))
+
+;(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "a*.melhor.heuristica"))

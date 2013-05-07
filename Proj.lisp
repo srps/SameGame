@@ -140,6 +140,8 @@
     (loop for key being the hash-keys of hash do     
           (let* ((novo-estado (copia-estado estado))
                  (b-aux (gethash key (no-h-blocos novo-estado))))
+            (if (< (list-length (bloco-lista-pecas b-aux)) 2)
+                (return))
             ;(print "$$$$$$$$$$$$$$$$$$$$")
             ;(print (print-hash hash))
             ;(print (print-tabuleiro (no-tabuleiro novo-estado) (no-n-linhas novo-estado) (no-n-colunas novo-estado)))
@@ -389,7 +391,9 @@
                           (if (not (eq b-aux NIL))
                               (progn
                                 (if (< (bloco-x-min b-aux) (first resul))
-                                    (setf (first resul) (bloco-x-min b-aux)))
+                                    (if (= (bloco-x-min b-aux) 0)
+                                        (setf (first resul) (bloco-x-min b-aux))
+                                      (setf (first resul) (- (bloco-x-min b-aux) 1))))
                                 (if (> (bloco-x-max b-aux) (second resul))
                                     (setf (second resul) (bloco-x-max b-aux)))    
                                 (if (> (bloco-y-max b-aux) (third resul))

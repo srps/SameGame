@@ -384,21 +384,21 @@
                           (setf b-aux (gethash bl-aux ht))
                           (if (not (eq b-aux NIL))
                               (progn
-                                (print b-aux)
                                 (if (< (bloco-x-min b-aux) (first resul))
                                     (setf (first resul) (bloco-x-min b-aux)))
                                 (if (> (bloco-x-max b-aux) (second resul))
                                     (setf (second resul) (bloco-x-max b-aux)))    
                                 (if (> (bloco-y-max b-aux) (third resul))
-                                    (setf (third resul) (bloco-y-max b-aux)))))
+                                    (setf (third resul) (bloco-y-max b-aux)))
+                                (loop for p in (bloco-lista-pecas b-aux) do 
+                                      (setf (peca-bloco p) -1))))                            ; Remove o bloco das peças)
                           (remhash bl-aux ht)                                                ; --Remove o bloco da hash
                           (setf (cdr (peca-pos p-aux)) (+ (cdr (peca-pos p-aux)) contador))  ; Puxa a peça para baixo
-                          (setf (peca-bloco p-aux) -1)                                       ; Remove o bloco da peça
                           (setf (nth coluna (nth linha tabuleiro)) NIL)                      ; Atualiza o tabuleiro
                           (setf (nth coluna (nth (+ linha contador) tabuleiro)) p-aux)))     ; Atualiza o tabuleiro
                   (incf contador)))                                                          ; Se for uma posição vazia, incrementa o contador
-          (setq contador 0))
-    resul))                                                               ; Reset do contador a cada coluna nova
+          (setq contador 0))                                                                 ; Reset do contador a cada coluna nova
+    resul))                                                               
 
 
 ;---------------------------------------------------------------------------;
@@ -542,15 +542,9 @@
                         (setf b-aux (gethash (peca-bloco p-aux) resul)))
                       (if (and (not (>= posx (- n-col 1)))                                                          ; Estou na última coluna do tabuleiro?
                                (not (eq (nth (+ posx 1) (nth posy tabuleiro)) nil)))                                ; A peça à frente existe?
-                          (progn
-                            (print "9847542524589758975")
-                            (print posx)
-                            (print (nth posx (nth posy tabuleiro)))
-                            (print (nth (+ posx 1) (nth posy tabuleiro)))
-                            (print (print-hash hash))
-                            (ve-frente tabuleiro p-aux b-aux posx posy resul)))                                        ; --Se não, verifica bloco à direita
-                      (if (not (>= posy (- n-lin 1)))                                                               ; Estou na última linha do tabuleiro?                                                                                   
-                          (ve-abaixo tabuleiro p-aux b-aux posx posy resul))))))                                    ; --Se não, verifica bloco em baixo
+                            (ve-frente tabuleiro p-aux b-aux posx posy resul))                                        ; --Se não, verifica bloco à direita
+                      (if (not (>= posy (- n-lin 1)))                                                               ; Estou na última linha do tabuleiro?                                       
+                            (ve-abaixo tabuleiro p-aux b-aux posx posy resul))))))
     resul))
  
 
@@ -662,7 +656,7 @@
          (p-baixo (nth posx (nth (+ posy 1) tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-baixo)))
-    ;(print "entrou: ve-abaixo")
+    (print "entrou: ve-abaixo")
     (if (= (peca-cor p-aux) (peca-cor p-baixo))                                             ; Se o da frente for igual
         (if (= -1 chave-b2)
                 (progn

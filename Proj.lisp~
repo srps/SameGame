@@ -141,29 +141,30 @@
     (loop for key being the hash-keys of hash do     
           (let* ((novo-estado (copia-estado estado))
                  (b-aux (gethash key (no-h-blocos novo-estado))))
-            (print "$$$$$$$$$$$$$$$$$$$$")
-            (print (print-hash hash))
-            (print (print-tabuleiro (no-tabuleiro novo-estado) (no-n-linhas novo-estado) (no-n-colunas novo-estado)))
+            ;(print "$$$$$$$$$$$$$$$$$$$$")
+            ;(print (print-hash hash))
+            ;(print (print-tabuleiro (no-tabuleiro novo-estado) (no-n-linhas novo-estado) (no-n-colunas novo-estado)))
             (atualiza-tabuleiro (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
                    
             ;(print (print-tabuleiro (no-tabuleiro novo-estado) (no-n-linhas novo-estado) (no-n-colunas novo-estado)))
             (remove-bloco novo-estado key (no-h-blocos novo-estado))
             
             (gravidade (no-tabuleiro novo-estado) b-aux (no-h-blocos novo-estado))
-             (print "#############")
-            (print (print-hash hash))
+            ;(print "#############")
+            ;(print (print-hash hash))
             (encosta-esquerda novo-estado (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
-            (print (print-hash (no-h-blocos novo-estado)))
+            ;(print (print-hash (no-h-blocos novo-estado)))
             (setf (no-h-blocos novo-estado) (lista-blocos (no-tabuleiro novo-estado) 0 (- (no-n-colunas novo-estado) 1) 0 (- (no-n-linhas novo-estado) 1) (no-n-linhas novo-estado) (no-n-colunas novo-estado) (no-h-blocos novo-estado)))
             (maior-bloco novo-estado (no-h-blocos novo-estado))
-            (print "//////////////////////")
-            (print (no-tabuleiro novo-estado))
-            (print "HASH ANTIGA")
-            (print (print-hash hash))
-            (print "HASH NOVA")
-            (print (print-hash (no-h-blocos novo-estado)))
+            (push novo-estado lista)
+            ;(print "//////////////////////")
+            ;(print (no-tabuleiro novo-estado))
+            ;(print "HASH ANTIGA")
+            ;(print (print-hash hash))
+            ;(print "HASH NOVA")
+            ;(print (print-hash (no-h-blocos novo-estado)))
             ))
-    ))
+    lista))
   
 
 
@@ -384,17 +385,16 @@
                           (setf b-aux (gethash bl-aux ht))
                           (if (not (eq b-aux NIL))
                               (progn
-                                (print b-aux)
                                 (if (< (bloco-x-min b-aux) (first resul))
                                     (setf (first resul) (bloco-x-min b-aux)))
                                 (if (> (bloco-x-max b-aux) (second resul))
                                     (setf (second resul) (bloco-x-max b-aux)))    
                                 (if (> (bloco-y-max b-aux) (third resul))
-                                    (setf (third resul) (bloco-y-max b-aux)))))
+                                    (setf (third resul) (bloco-y-max b-aux)))
+                                (loop for p in (bloco-lista-pecas b-aux) do 
+                                      (setf (peca-bloco p) -1))))                            ; Remove o bloco das peças)
                           (remhash bl-aux ht)                                                ; --Remove o bloco da hash
                           (setf (cdr (peca-pos p-aux)) (+ (cdr (peca-pos p-aux)) contador))  ; Puxa a peça para baixo
-                          (loop for p in (bloco-lista-pecas bloco) do 
-                                (setf (peca-bloco p) -1))                                    ; Remove o bloco das peças
                           (setf (nth coluna (nth linha tabuleiro)) NIL)                      ; Atualiza o tabuleiro
                           (setf (nth coluna (nth (+ linha contador) tabuleiro)) p-aux)))     ; Atualiza o tabuleiro
                   (incf contador)))                                                          ; Se for uma posição vazia, incrementa o contador
@@ -476,38 +476,6 @@
   (remhash chave-b2 ht)))                                                ; Remove o 2º bloco da HT
 
 
-
-;--------------------------------------------------------;
-; Função que actualiza as margens do bloco após junção   ;
-; -------------------------------------------------------;
-; ARG1 - bloco a actualizar                              ;
-;--------------------------------------------------------;
-
-(defun actualiza-margens (b-aux)
-  (let* ((xmin 0)
-         (xmax 0)
-         (ymin 0)
-         (ymax 0)
-         (pecas (bloco-lista-pecas b-aux)))
-    (setf xmin (car (peca-pos (car pecas))))
-    (setf ymin (cdr (peca-pos (car pecas))))
-    (loop for p-aux in (cdr pecas) do
-          (print p-aux)
-          (if (< (car (peca-pos p-aux)) xmin)
-              (setf xmin  (car (peca-pos p-aux))))
-          (if (> (car (peca-pos p-aux)) xmax)
-              (setf xmax  (car (peca-pos p-aux))))
-          (if (< (cdr (peca-pos p-aux)) ymin)
-              (setf ymin  (cdr (peca-pos p-aux))))
-          (if (> (cdr (peca-pos p-aux)) ymax)
-              (setf ymax  (cdr (peca-pos p-aux)))))
-    (setf (bloco-x-min b-aux) xmin)
-    (setf (bloco-x-max b-aux) xmax)
-    (setf (bloco-y-min b-aux) ymin)
-    (setf (bloco-y-max b-aux) ymax)
-    b-aux))
-
-
 ;---------------------------------------------;
 ; Função que percorre uma determinada zona    ;
 ; e determina os diferentes blocos existentes ;
@@ -543,15 +511,9 @@
                         (setf b-aux (gethash (peca-bloco p-aux) resul)))
                       (if (and (not (>= posx (- n-col 1)))                                                          ; Estou na última coluna do tabuleiro?
                                (not (eq (nth (+ posx 1) (nth posy tabuleiro)) nil)))                                ; A peça à frente existe?
-                          (progn
-                            (print "9847542524589758975")
-                            (print posx)
-                            (print (nth posx (nth posy tabuleiro)))
-                            (print (nth (+ posx 1) (nth posy tabuleiro)))
-                            (print (print-hash hash))
-                            (ve-frente tabuleiro p-aux b-aux posx posy resul)))                                        ; --Se não, verifica bloco à direita
-                      (if (not (>= posy (- n-lin 1)))                                                               ; Estou na última linha do tabuleiro?                                                                                   
-                          (ve-abaixo tabuleiro p-aux b-aux posx posy resul))))))                                    ; --Se não, verifica bloco em baixo
+                            (ve-frente tabuleiro p-aux b-aux posx posy resul))                                        ; --Se não, verifica bloco à direita
+                      (if (not (>= posy (- n-lin 1)))                                                               ; Estou na última linha do tabuleiro?                                       
+                            (ve-abaixo tabuleiro p-aux b-aux posx posy resul))))))
     resul))
  
 
@@ -723,9 +685,8 @@
     ;(print (print-tabuleiro tab (- (no-n-linhas estado-inicial) 1) (- (no-n-colunas estado-inicial) 1))) 
     ;(print (print-hash h-blocos))
     ;(maior-bloco estado-inicial h-blocos)
-    (print "FIMMMMMMMMMMMM")
-    estado-inicial)
-)
+    ;(print "FIMMMMMMMMMMMM")
+    estado-inicial))
 
 
 ;(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 1 2) (1 1 1 1 1))

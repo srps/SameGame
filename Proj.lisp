@@ -148,11 +148,12 @@
                   (atualiza-tabuleiro (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
                   (remove-bloco novo-estado key (no-h-blocos novo-estado))
                   (let* ((l-margens
-                          (gravidade (no-tabuleiro novo-estado) b-aux (no-h-blocos novo-estado))))
-                    (encosta-esquerda novo-estado (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
+                          (gravidade (no-tabuleiro novo-estado) b-aux (no-h-blocos novo-estado)))
+                         (l-m2 
+                          (encosta-esquerda novo-estado (no-tabuleiro novo-estado) (no-h-blocos novo-estado) l-margens)))
                     (setf (no-h-blocos novo-estado) (lista-blocos (no-tabuleiro novo-estado) 
-                                                                  (first l-margens) (second l-margens) 
-                                                                  0 (third l-margens) 
+                                                                  (first l-m2) (second l-m2) 
+                                                                  0 (third l-m2) 
                                                                   (no-n-linhas novo-estado) (no-n-colunas novo-estado) (no-h-blocos novo-estado))))
                   (maior-bloco novo-estado (no-h-blocos novo-estado))
                   (push novo-estado lista)
@@ -413,13 +414,13 @@
 ;---------------------------------------------------------------------------;
 
 
-(defun encosta-esquerda (estado tabuleiro ht)
+(defun encosta-esquerda (estado tabuleiro ht l-margens)
   (let* ((x-fin (- (list-length (first tabuleiro)) 1))
          (y-ini (- (list-length tabuleiro) 1))
          (p-aux)
          (contador 0))
     (print "entrou: encosta-esquerda")
-    (loop for coluna from 0 to x-fin do
+    (loop for coluna from 1 to x-fin do
           (if (eq (nth coluna (nth y-ini tabuleiro)) NIL)
               (incf contador)                                                                         ; Se for uma posição vazia, incrementa o contador
             (if (> contador 0)
@@ -429,12 +430,23 @@
                           (progn
                             (setf (car (peca-pos p-aux)) (- (car (peca-pos p-aux)) contador))         ; Puxa a peça para a esquerda
                             (setf (nth coluna (nth linha tabuleiro)) NIL)                             ; Atualiza o tabuleiro
-                            (setf (nth (- coluna contador) (nth linha tabuleiro)) p-aux))             ; Atualiza o tabuleiro
+                            (setf (nth (- coluna contador) (nth linha tabuleiro)) p-aux)              ; Atualiza o tabuleiro
+                            (if (not (= (peca-bloco p-aux) -1))
+                                (progn
+                                  (let* ((b-aux (gethash (peca-bloco p-aux) ht)))
+                                    (if (= coluna (bloco-x-min b-aux))
+                                        (progn
+                                        (setf (bloco-x-min (gethash (peca-bloco p-aux) ht)) (- coluna 1))
+                                        (setf (first l-margens) (- coluna 1))))                                  
+                                    (if (= coluna (bloco-x-max b-aux))
+                                        (progn
+                                          (setf (bloco-x-max (gethash (peca-bloco p-aux) ht)) (- coluna 1))
+                                          (setf (second l-margens) (- coluna 1))))))))                       
                         (return))))))                                                                 ; Quando vê NIL, salta para a próxima coluna
     (setf (no-n-colunas estado) (- (no-n-colunas estado) contador))
     (print tabuleiro)
     (print contador)
-    contador))      
+    l-margens))      
 
 
 

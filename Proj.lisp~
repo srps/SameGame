@@ -431,7 +431,9 @@
                             (setf (nth coluna (nth linha tabuleiro)) NIL)                             ; Atualiza o tabuleiro
                             (setf (nth (- coluna contador) (nth linha tabuleiro)) p-aux))             ; Atualiza o tabuleiro
                         (return))))))                                                                 ; Quando vê NIL, salta para a próxima coluna
-    ;(setf (no-n-colunas estado) (- (no-n-colunas estado) contador))
+    (setf (no-n-colunas estado) (- (no-n-colunas estado) contador))
+    (print tabuleiro)
+    (print contador)
     contador))      
 
 

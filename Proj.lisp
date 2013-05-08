@@ -10,8 +10,7 @@
 
 (in-package :user)
 
-;(build-lisp-image "biggerimage.dxl" :lisp-heap-start "256m"
-;;;                  :c-heap-start "1610m")
+
 
 (eval-when (compile) (declaim (optimize (speed 3) (safety 0) (debug 0))))
 
@@ -79,7 +78,7 @@
 
 	
 (defstruct nos
-  (pontuacao 0	:type fixnum) ; Pontuação até ao momento do estado
+  (pontuacao 0 :type fixnum) ; Pontuação até ao momento do estado
   (prof 0 :type fixnum)
   (n-pecas 0 :type fixnum)    ; Peças por eliminar
   (n-blocos 0 :type fixnum)   ; Blocos por eliminar         
@@ -178,15 +177,22 @@
 
 
 (defun heuristica1 (estado)
-  (nos-maior-bloco estado))
+  (- *tamanho-tabuleiro* (nos-maior-bloco estado)))
 
 
 ;Heuristica que adapta a heuristica 1 
 ;para conseguir funcionar com a*
 ;dá mais importância aos estados que estão a maior profundidade         
-(defun heuristica5 (estado)
-                (+ (* 144 (- 72 (nos-prof estado)))
-                        (heuristica1 estado)))
+(defun heuristica2 (estado)
+  (+ (* 144 (- 72 (nos-prof estado)))
+     (heuristica1 estado)))
+
+(defun heuristica3 (estado)
+  (+ (* 144 (- 72 (nos-prof estado)))
+     (nos-pontuacao estado)))
+
+(defun heuristica4 (estado)
+  (+ (heuristica1 estado) (nos-pontuacao estado)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	PROCURA
@@ -291,7 +297,8 @@
 
 (defun copia-estado (estado)
   (make-nos        :tabuleiro (cria-tabuleiro-novo (nos-n-linhas estado) (nos-n-colunas estado))
-                  :h-blocos (copia-hash (nos-h-blocos estado))
+            :h-blocos (copia-hash (nos-h-blocos estado))
+            :prof (nos-prof estado)
                   :pontuacao (nos-pontuacao estado)
                   :n-pecas (nos-n-pecas estado)
                   :n-blocos (nos-n-blocos estado)
@@ -667,7 +674,7 @@
                  (procura-tabuleiro estado-inicial (list #'gera-sucessores) heuristica1))
 
                 ((string-equal algoritmo "a*.melhor.heuristica")
-                 (setf solucao (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristica1) "a*" :espaco-em-arvore? T)))
+                 (setf solucao (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristica2) "a*" :espaco-em-arvore? T)))
 
                 ((string-equal algoritmo "a*.melhor.heuristica.alternativa")
                  (procura-tabuleiro estado-inicial g-sucessores heuristica2))
@@ -676,7 +683,8 @@
                  (sondagem-iterativa estado-inicial))
 
                 ((string-equal algoritmo "abordagem.alternativa")
-                 (procura-alternativa estado-inicial gera-sucessores heuristica1))))
+                 (setf solucao (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :estado= #'equal) 
+									"profundidade" :espaco-em-arvore? T))))                 ))
     (print "FIM")
     (print *max-result*)
     (setf *max-result* 0)
@@ -684,7 +692,7 @@
     ;(setf solucao (converte-solucao solucao))
 
   
-    estado-inicial))
+    solucao))
 
 
 ;(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 1 2) (1 1 1 1 1))
@@ -692,8 +700,8 @@
 
 ;(print (resolve-same-game '((1 10 10 10 8) (1 2 1 1 1) (1 10 1 10 2) (1 1 1 10 10)) "a*.melhor.heuristica"))
 
-;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "a*.melhor.heuristica"))
+(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "abordagem.alternativa"))
 
 ;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "a*.melhor.heuristica"))
 
-(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "a*.melhor.heuristica"))
+;(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "a*.melhor.heuristica"))

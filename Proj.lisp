@@ -139,7 +139,7 @@
          (nr-colunas (no-n-colunas estado))
          (lista()))
     (print "SUCESSORES")
-    (print (print-hash hash))
+    ;(print (print-hash hash))
     (loop for key being the hash-keys of hash do     
           (let* ((novo-estado (copia-estado estado))
                  (b-aux (gethash key (no-h-blocos novo-estado))))
@@ -418,9 +418,10 @@
   (let* ((x-fin (- (list-length (first tabuleiro)) 1))
          (y-ini (- (list-length tabuleiro) 1))
          (p-aux)
+         (resul (list (first l-margens) (second l-margens) (third l-margens)))
          (contador 0))
     (print "entrou: encosta-esquerda")
-    (loop for coluna from 1 to x-fin do
+    (loop for coluna from 0 to x-fin do
           (if (eq (nth coluna (nth y-ini tabuleiro)) NIL)
               (incf contador)                                                                         ; Se for uma posição vazia, incrementa o contador
             (if (> contador 0)
@@ -434,19 +435,20 @@
                             (if (not (= (peca-bloco p-aux) -1))
                                 (progn
                                   (let* ((b-aux (gethash (peca-bloco p-aux) ht)))
-                                    (if (= coluna (bloco-x-min b-aux))
+                                    (if (< (- coluna contador) (bloco-x-min b-aux))
                                         (progn
-                                        (setf (bloco-x-min (gethash (peca-bloco p-aux) ht)) (- coluna 1))
-                                        (setf (first l-margens) (- coluna 1))))                                  
-                                    (if (= coluna (bloco-x-max b-aux))
-                                        (progn
-                                          (setf (bloco-x-max (gethash (peca-bloco p-aux) ht)) (- coluna 1))
-                                          (setf (second l-margens) (- coluna 1))))))))                       
+                                          (setf (bloco-x-min (gethash (peca-bloco p-aux) ht)) (- coluna contador))
+                                          (if (< (- coluna (+ contador 1)) (first l-margens))
+                                              (if (< (- coluna (+ contador 2)) 0)
+                                                  (setf (first resul) 0)
+                                                (setf (first resul) (- coluna (+ contador 1)))))))                                  
+                                    (if (>= coluna (bloco-x-max b-aux))
+                                        (setf (bloco-x-max (gethash (peca-bloco p-aux) ht)) (- coluna contador)))))))                       
                         (return))))))                                                                 ; Quando vê NIL, salta para a próxima coluna
     (setf (no-n-colunas estado) (- (no-n-colunas estado) contador))
-    (print tabuleiro)
-    (print contador)
-    l-margens))      
+    ;(print tabuleiro)
+    ;(print contador)
+    resul))      
 
 
 

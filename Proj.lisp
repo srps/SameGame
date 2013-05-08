@@ -154,8 +154,8 @@
                          (l-m2 
                           (encosta-esquerda novo-estado (nos-tabuleiro novo-estado) (nos-h-blocos novo-estado) l-margens)))
                     (setf (nos-h-blocos novo-estado) (lista-blocos (nos-tabuleiro novo-estado) 
-                                                                  (first l-m2) (second l-m2) 
-                                                                  0 (third l-m2) 
+                                                                  0 (- (nos-n-colunas novo-estado) 1) 
+                                                                  0 (- (nos-n-linhas novo-estado) 1)
                                                                   (nos-n-linhas novo-estado) (nos-n-colunas novo-estado) (nos-h-blocos novo-estado))))
                   (maior-bloco novo-estado (nos-h-blocos novo-estado))
                   (incf (nos-prof novo-estado))
@@ -382,7 +382,7 @@
                               (progn
                                 (if (< (bloco-x-min b-aux) (first resul))
                                     (if (= (bloco-x-min b-aux) 0)
-                                        (setf (first resul) (bloco-x-min b-aux))
+                                        (setf (first resul) 0)
                                       (setf (first resul) (- (bloco-x-min b-aux) 1))))
                                 (if (> (bloco-x-max b-aux) (second resul))
                                     (setf (second resul) (bloco-x-max b-aux)))    
@@ -436,7 +436,7 @@
                                         (progn
                                           (setf (bloco-x-min (gethash (peca-bloco p-aux) ht)) (- coluna contador))
                                           (if (< (- coluna (+ contador 1)) (first l-margens))
-                                              (if (< (- coluna (+ contador 2)) 0)
+                                              (if (< (- coluna (+ contador 1)) 0)
                                                   (setf (first resul) 0)
                                                 (setf (first resul) (- coluna (+ contador 1)))))))                                  
                                     (if (>= coluna (bloco-x-max b-aux))
@@ -470,10 +470,10 @@
          (ymin (bloco-y-min b-trash))                                    ; Y Mínimo do bloco que vai à vida
          (ymax (bloco-y-max b-trash)))                                   ; Y Máximo do bloco que vai à vida
   (loop for p-aux in (bloco-lista-pecas b-trash) do
-        (setq posx (car (peca-pos p-aux)))                               ; Guarda a coordenada x da peça a ser mudada
-        (setq posy (cdr (peca-pos p-aux)))                               ; Guarda a coordenada y da peça a ser mudada
+        (setf posx (car (peca-pos p-aux)))                               ; Guarda a coordenada x da peça a ser mudada
+        (setf posy (cdr (peca-pos p-aux)))                               ; Guarda a coordenada y da peça a ser mudada
         (setf (peca-bloco p-aux) chave-b1)                               ; Muda o bloco da peça
-        (setq l-aux (append l-aux (list p-aux)))                         ; Insere a peça na lista do bloco original
+        (setf l-aux (append l-aux (list p-aux)))                         ; Insere a peça na lista do bloco original
         (setf (nth posx (nth posy tabuleiro)) p-aux))                    ; Re-insere a peça no tabuleiro
   (setf (bloco-lista-pecas b-aux) l-aux)                                 ; Coloca a nova lista no bloco original
   (if (> (bloco-x-min b-aux) xmin)                                       ;;---------------------------------------------;
@@ -611,7 +611,8 @@
               (setf (nth (+ posx 1) (nth posy tabuleiro)) p-dir)                      ; Coloca a peça atualizada no tabuleiro
               (setq l-aux (append l-aux (list p-dir)))                                ; Adiciona a peça à lista para atualizar o bloco
               (setf (bloco-lista-pecas (gethash (peca-bloco p-dir) ht)) l-aux)        ; Atualiza o bloco na hash
-              (setf (bloco-x-max (gethash (peca-bloco p-dir) ht)) (+ posx 1)))        ; Incrementa O xmax do bloco     
+              (if (> (+ posx 1) (bloco-x-max (gethash (peca-bloco p-dir) ht)))
+                  (setf (bloco-x-max (gethash (peca-bloco p-dir) ht)) (+ posx 1))))   ; Incrementa O xmax do bloco     
           (if (not (= chave-b1 chave-b2))
               (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
                       (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
@@ -643,7 +644,8 @@
                   (setf (nth posx (nth (+ posy 1) tabuleiro)) p-baixo)                      ; Coloca a peça atualizada no tabuleiro
                   (setq l-aux (append l-aux (list p-baixo)))                                ; Adiciona a peça à lista para atualizar o bloco
                   (setf (bloco-lista-pecas (gethash (peca-bloco p-baixo) ht)) l-aux)        ; Atualiza o bloco na hash
-                  (setf (bloco-y-max (gethash (peca-bloco p-baixo) ht)) (+ posy 1)))        ; Incrementa o ymax do bloco 
+                  (if (> (+ posy 1) (bloco-y-max (gethash (peca-bloco p-baixo) ht)))
+                      (setf (bloco-y-max (gethash (peca-bloco p-baixo) ht)) (+ posy 1))))   ; Incrementa o ymax do bloco 
           (if (not (= chave-b1 chave-b2))        
               (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
                       (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
@@ -675,7 +677,7 @@
                  (procura-tabuleiro estado-inicial (list #'gera-sucessores) heuristica1))
 
                 ((string-equal algoritmo "a*.melhor.heuristica")
-                 (setf solucao (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristica2) "a*" :espaco-em-arvore? T)))
+                 (setf solucao (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristica4) "a*" :espaco-em-arvore? T)))
 
                 ((string-equal algoritmo "a*.melhor.heuristica.alternativa")
                  (procura-tabuleiro estado-inicial g-sucessores heuristica2))
@@ -701,8 +703,8 @@
 
 ;(print (resolve-same-game '((1 10 10 10 8) (1 2 1 1 1) (1 10 1 10 2) (1 1 1 10 10)) "a*.melhor.heuristica"))
 
-(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "abordagem.alternativa"))
+;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "abordagem.alternativa"))
 
 ;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "a*.melhor.heuristica"))
 
-;(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "a*.melhor.heuristica"))
+(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "a*.melhor.heuristica"))

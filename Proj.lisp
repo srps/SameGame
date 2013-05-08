@@ -388,8 +388,9 @@
                                     (setf (second resul) (bloco-x-max b-aux)))    
                                 (if (> (bloco-y-max b-aux) (third resul))
                                     (setf (third resul) (bloco-y-max b-aux)))
-                                (loop for p in (bloco-lista-pecas b-aux) do 
-                                      (setf (peca-bloco p) -1))))                            ; Remove o bloco das peças)
+                                (loop for p in (bloco-lista-pecas b-aux) do
+                                      (setf (peca-bloco p) -1)
+                                      (setf (nth (car (peca-pos p)) (nth (cdr (peca-pos p)) tabuleiro)) p))))                            ; Remove o bloco das peças)
                           (remhash bl-aux ht)                                                ; --Remove o bloco da hash
                           (setf (cdr (peca-pos p-aux)) (+ (cdr (peca-pos p-aux)) contador))  ; Puxa a peça para baixo
                           (setf (nth coluna (nth linha tabuleiro)) NIL)                      ; Atualiza o tabuleiro

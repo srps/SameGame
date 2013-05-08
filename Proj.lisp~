@@ -22,7 +22,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defconstant MAX-TEMPO 10) ;;Tempo limite de tempo para execução
+(defconstant MAX-TEMPO 250) ;;Tempo limite de tempo para execução
 
 
 
@@ -59,6 +59,7 @@
 
 (defvar *max-result* 0)
 (defvar tempo-inicio (get-internal-run-time))
+(defvar *tamanho-tabuleiro* 0)
 
 (defstruct peca
   pos                         ; posição da peça (x . y)
@@ -179,7 +180,15 @@
 
 
 (defun heuristica1 (estado)
-  (- 0 (no-maior-bloco estado)))
+  (no-maior-bloco estado))
+
+
+;Heuristica que adapta a heuristica 1 
+;para conseguir funcionar com a*
+;dá mais importância aos estados que estão a maior profundidade         
+(defun heuristica5 (estado)
+                (+ (* 144 (- 72 (no-prof estado)))
+                        (heuristica1 estado)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	PROCURA
@@ -695,6 +704,8 @@
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
         ; (heuristica-opt	#'heur-menor-altura)
          resul solucao)
+    (setf *tamanho-tabuleiro* (* (list-length (no-tabuleiro estado-inicial)) (list-length (first (no-tabuleiro estado-inicial)))))
+    (print *tamanho-tabuleiro*)
 
     ;(print (print-hash h-blocos))
     (setf tempo-inicio (get-internal-run-time))
@@ -714,11 +725,13 @@
                 ((string-equal algoritmo "abordagem.alternativa")
                  (procura-alternativa estado-inicial gera-sucessores heuristica1))))
     (print "FIM")
+    (print *max-result*)
     (setf *max-result* 0)
+    (setf tamanho-tabuleiro 0)
     ;(setf solucao (converte-solucao solucao))
 
   
-    solucao))
+    estado-inicial))
 
 
 ;(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 1 2) (1 1 1 1 1))

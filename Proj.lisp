@@ -22,7 +22,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defconstant MAX-TEMPO 1) ;;Tempo limite de tempo para execução
+(defconstant MAX-TEMPO 250) ;;Tempo limite de tempo para execução
 
 
 
@@ -59,6 +59,7 @@
 
 (defvar *max-result* 0)
 (defvar tempo-inicio (get-internal-run-time))
+(defvar *tamanho-tabuleiro* 0)
 
 (defstruct peca
   pos                         ; posição da peça (x . y)
@@ -77,7 +78,7 @@
 )
 
 	
-(defstruct no
+(defstruct nos
   (pontuacao 0	:type fixnum) ; Pontuação até ao momento do estado
   (prof 0 :type fixnum)
   (n-pecas 0 :type fixnum)    ; Peças por eliminar
@@ -96,8 +97,6 @@
 (defun objectivo? (estado)
  (time-to-stop? tempo-inicio MAX-TEMPO))
 
-;(eq *max-result -1))
-;(eq (no-n-blocos estado) (no-n-pecas estado)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	DEBUG
@@ -137,30 +136,30 @@
 ;--------------------------------------------------------------------------;
 
 (defun gera-sucessores (estado)
-  (let* ((tabuleiro (no-tabuleiro estado))
-         (hash (no-h-blocos estado))
-         (nr-linhas (no-n-linhas estado))
-         (nr-colunas (no-n-colunas estado))
+  (let* ((tabuleiro (nos-tabuleiro estado))
+         (hash (nos-h-blocos estado))
+         (nr-linhas (nos-n-linhas estado))
+         (nr-colunas (nos-n-colunas estado))
          (lista()))
     ;(print "SUCESSORES")
     ;(print (print-hash hash))
     (loop for key being the hash-keys of hash do     
           (let* ((novo-estado (copia-estado estado))
-                 (b-aux (gethash key (no-h-blocos novo-estado))))
+                 (b-aux (gethash key (nos-h-blocos novo-estado))))
             (if (>= (list-length (bloco-lista-pecas b-aux)) 2)
                 (progn
-                  (atualiza-tabuleiro (no-tabuleiro novo-estado) (no-h-blocos novo-estado))
-                  (remove-bloco novo-estado key (no-h-blocos novo-estado))
+                  (atualiza-tabuleiro (nos-tabuleiro novo-estado) (nos-h-blocos novo-estado))
+                  (remove-bloco novo-estado key (nos-h-blocos novo-estado))
                   (let* ((l-margens
-                          (gravidade (no-tabuleiro novo-estado) b-aux (no-h-blocos novo-estado)))
+                          (gravidade (nos-tabuleiro novo-estado) b-aux (nos-h-blocos novo-estado)))
                          (l-m2 
-                          (encosta-esquerda novo-estado (no-tabuleiro novo-estado) (no-h-blocos novo-estado) l-margens)))
-                    (setf (no-h-blocos novo-estado) (lista-blocos (no-tabuleiro novo-estado) 
+                          (encosta-esquerda novo-estado (nos-tabuleiro novo-estado) (nos-h-blocos novo-estado) l-margens)))
+                    (setf (nos-h-blocos novo-estado) (lista-blocos (nos-tabuleiro novo-estado) 
                                                                   (first l-m2) (second l-m2) 
                                                                   0 (third l-m2) 
-                                                                  (no-n-linhas novo-estado) (no-n-colunas novo-estado) (no-h-blocos novo-estado))))
-                  (maior-bloco novo-estado (no-h-blocos novo-estado))
-                  (incf (no-prof novo-estado))
+                                                                  (nos-n-linhas novo-estado) (nos-n-colunas novo-estado) (nos-h-blocos novo-estado))))
+                  (maior-bloco novo-estado (nos-h-blocos novo-estado))
+                  (incf (nos-prof novo-estado))
                   (push novo-estado lista)
             ))))
     lista))
@@ -179,7 +178,15 @@
 
 
 (defun heuristica1 (estado)
-  (- 0 (no-maior-bloco estado)))
+  (nos-maior-bloco estado))
+
+
+;Heuristica que adapta a heuristica 1 
+;para conseguir funcionar com a*
+;dá mais importância aos estados que estão a maior profundidade         
+(defun heuristica5 (estado)
+                (+ (* 144 (- 72 (nos-prof estado)))
+                        (heuristica1 estado)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	PROCURA
@@ -194,51 +201,6 @@
 
 (defun procura-alternativa (estado sucessores heuristica))
 
-(defun sondagem-iterativa(estado-inicial)
-  (let* (	
-         (melhor-resultado 0)
-         ;(melhor-resultado (list (list (make-estado	:cantos nil :colocadas nil :livres nil
-	;									:rectangulo (list +MAIOR_RAIO+ +MAIOR_RAIO+))) 0 0 0))
-		;	(tentativas 0)
-		;	(melhor-altura +BIG_INT+)
-		;	(melhor-tentativa)
-		;	resultado
-         (ngerados 0)
-         (nexpandidos 0)
-         (max-segundos 5)	; 4 mins
-         (tempo-inicio (get-internal-run-time)) 
-							; (inicio + Nsegs*Tickspsec)
-         (tempo-limite (+ tempo-inicio (* max-segundos internal-time-units-per-second)))
-		;	(tempo-melhor tempo-inicio)
-         )
-		 
-   ; (print ngerados)
-    (loop while (> tempo-limite (get-internal-run-time)) do
-		;	(if (car (setf resultado (chama-procura estado-inicial #'sucessores-sondagem nil "profundidade")))
-		;		(let ((altura (maior-altura (estado-colocadas (resultado-solucao resultado)))))
-		;			(if (< altura melhor-altura)
-		;				(progn	; Optimizacao: corre a proxima ronda com a nova altura minima encontrada
-		;						(setf melhor-altura	(setf (second (estado-rectangulo estado-inicial)) altura))
-		;						(setf tempo-melhor (get-internal-run-time))
-		;						(setf melhor-resultado	resultado)
-		;						(setf melhor-tentativa tentativas)
-		;						(printf "Menor Altura ja' encontrada: %d" melhor-altura)
-		;				))))
-		;	
-		;	(incf tentativas)
-		;	(incf nexpandidos	(caddr resultado))
-		;	(incf ngerados		(cadddr resultado)))
-
-		;(decf tempo-melhor tempo-inicio)
-		
-		;(setf (cadr		melhor-resultado) (- (get-internal-run-time) tempo-inicio))
-		;(setf (caddr	melhor-resultado) nexpandidos)
-		;(setf (cadddr	melhor-resultado) ngerados)
-          ;(printf "Max ticks: %d, Tentativas: %d" (cadr melhor-resultado) tentativas)
-          ;(printf "Melhor solucao na %d tentativa, com %d ticks" melhor-tentativa tempo-melhor)
-          )
-          melhor-resultado)
-    )
 
 
 
@@ -256,7 +218,7 @@
         nil
       (progn
         (loop for no-a-converter in resultado-temp do
-             (print (print-hash (no-h-blocos no-a-converter))))))
+             (print (print-hash (nos-h-blocos no-a-converter))))))
         resultado
   ))
 
@@ -328,13 +290,13 @@
 
 
 (defun copia-estado (estado)
-  (make-no        :tabuleiro (cria-tabuleiro-novo (no-n-linhas estado) (no-n-colunas estado))
-                  :h-blocos (copia-hash (no-h-blocos estado))
-                  :pontuacao (no-pontuacao estado)
-                  :n-pecas (no-n-pecas estado)
-                  :n-blocos (no-n-blocos estado)
-                  :n-linhas (no-n-linhas estado)
-                  :n-colunas (no-n-colunas estado)
+  (make-nos        :tabuleiro (cria-tabuleiro-novo (nos-n-linhas estado) (nos-n-colunas estado))
+                  :h-blocos (copia-hash (nos-h-blocos estado))
+                  :pontuacao (nos-pontuacao estado)
+                  :n-pecas (nos-n-pecas estado)
+                  :n-blocos (nos-n-blocos estado)
+                  :n-linhas (nos-n-linhas estado)
+                  :n-colunas (nos-n-colunas estado)
                   :maior-bloco 0))
                                                                       
 
@@ -355,7 +317,7 @@
                 (setf b-aux (gethash key hash))
                 (if (< result (list-length (bloco-lista-pecas b-aux)))
                     (setf result (list-length (bloco-lista-pecas b-aux)))))
-          (setf (no-maior-bloco estado) result)   
+          (setf (nos-maior-bloco estado) result)   
 ))
 
 ;--------------------------------------------------------------------------;
@@ -371,13 +333,13 @@
          (pontos (expt (- (list-length l-aux) 2) 2))
          (pos))
     (remhash id-bloco ht)
-    (setf (no-pontuacao estado) (+ (no-pontuacao estado) pontos))
-    (setf (no-n-pecas estado) (- (no-n-pecas estado) (list-length l-aux)))
+    (setf (nos-pontuacao estado) (+ (nos-pontuacao estado) pontos))
+    (setf (nos-n-pecas estado) (- (nos-n-pecas estado) (list-length l-aux)))
     (loop for p-aux in l-aux do
           (setq pos (peca-pos p-aux))
-          (setf (nth (car pos) (nth (cdr pos) (no-tabuleiro estado))) NIL))
-        (if (> (no-pontuacao estado) *max-result*)
-        (setf *max-result* (no-pontuacao estado)) 
+          (setf (nth (car pos) (nth (cdr pos) (nos-tabuleiro estado))) NIL))
+        (if (> (nos-pontuacao estado) *max-result*)
+        (setf *max-result* (nos-pontuacao estado)) 
       )
   ))
 
@@ -472,7 +434,7 @@
                                     (if (>= coluna (bloco-x-max b-aux))
                                         (setf (bloco-x-max (gethash (peca-bloco p-aux) ht)) (- coluna contador)))))))                       
                         (return))))))                                                                 ; Quando vê NIL, salta para a próxima coluna
-    (setf (no-n-colunas estado) (- (no-n-colunas estado) contador))
+    (setf (nos-n-colunas estado) (- (nos-n-colunas estado) contador))
     ;(print tabuleiro)
     ;(print contador)
     resul))      
@@ -688,13 +650,15 @@
 (defun resolve-same-game (problema algoritmo)
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
          (h-blocos (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
-         (estado-inicial (make-no :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0))
+         (estado-inicial (make-nos :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0))
          ;(b-aux (gethash 0 h-blocos))
         ; (g-sucessores	#'gera-sucessores)
         ; (heuristica1		#'heur-melhor-primeiro)
         ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
         ; (heuristica-opt	#'heur-menor-altura)
          resul solucao)
+    (setf *tamanho-tabuleiro* (* (list-length (nos-tabuleiro estado-inicial)) (list-length (first (nos-tabuleiro estado-inicial)))))
+    (print *tamanho-tabuleiro*)
 
     ;(print (print-hash h-blocos))
     (setf tempo-inicio (get-internal-run-time))
@@ -714,11 +678,13 @@
                 ((string-equal algoritmo "abordagem.alternativa")
                  (procura-alternativa estado-inicial gera-sucessores heuristica1))))
     (print "FIM")
+    (print *max-result*)
     (setf *max-result* 0)
+    (setf tamanho-tabuleiro 0)
     ;(setf solucao (converte-solucao solucao))
 
   
-    solucao))
+    estado-inicial))
 
 
 ;(print (resolve-same-game '((1 1 1 10 8) (1 2 2 1 3) (1 2 2 1 2) (1 1 1 1 1))

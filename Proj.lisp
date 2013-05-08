@@ -138,7 +138,7 @@
          (nr-linhas (no-n-linhas estado))
          (nr-colunas (no-n-colunas estado))
          (lista()))
-    (print "SUCESSORES")
+    ;(print "SUCESSORES")
     ;(print (print-hash hash))
     (loop for key being the hash-keys of hash do     
           (let* ((novo-estado (copia-estado estado))
@@ -174,7 +174,7 @@
 
 
 (defun procura-tabuleiro (estado sucessores heuristica)
-  (print (funcall #'gera-sucessores estado))
+  ;(print (funcall #'gera-sucessores estado))
   )
 
 
@@ -237,7 +237,7 @@
 
 (defun atualiza-tabuleiro (tabuleiro ht)
   (let* ((pos))
-    (print "entrou: atualiza-tabuleiro")
+    ;(print "entrou: atualiza-tabuleiro")
     (loop for bl being the hash-values of ht do
           (loop for p-aux in (bloco-lista-pecas bl) do
                 (setq pos (peca-pos p-aux))
@@ -373,9 +373,9 @@
          (b-aux (make-bloco))
          (contador 0)
          (resul (list x-ini x-fin y-ini)))                                                   ; Para evitar ver peças desnecessárias no lista-blocos
-    (print "entrou: gravidade")                                                              ; --Y min não interessa porque as peças caem 
-    (loop for coluna from x-ini to x-fin do
-          (loop for linha from y-ini downto 0 do
+    ;(print "entrou: gravidade")                                                              ; --Y min não interessa porque as peças caem 
+    (loop for coluna from 0 to (- (list-length (first tabuleiro)) 1) do
+          (loop for linha from (- (list-length tabuleiro) 1) downto 0 do
                 (setq p-aux (nth coluna (nth linha tabuleiro)))
                 (if (not (eq p-aux NIL))                                                     ; Se houver peça na posição indicada
                     (if (> contador 0)                                                       ; Se houver espaços vazios abaixo da peça
@@ -420,7 +420,7 @@
          (p-aux)
          (resul (list (first l-margens) (second l-margens) (third l-margens)))
          (contador 0))
-    (print "entrou: encosta-esquerda")
+    ;(print "entrou: encosta-esquerda")
     (loop for coluna from 0 to x-fin do
           (if (eq (nth coluna (nth y-ini tabuleiro)) NIL)
               (incf contador)                                                                         ; Se for uma posição vazia, incrementa o contador
@@ -510,7 +510,7 @@
          (p-aux)
          (b-aux)
          (contador (+ (ve-maior-hash hash) 1)))
-    (print "entrou: lista-blocos")
+    ;(print "entrou: lista-blocos")
     (loop for posy from y-ini to y-fin do
           (loop for posx from x-ini to x-fin do
                 (if (not (eq (nth posx (nth posy tabuleiro)) nil))
@@ -549,7 +549,7 @@
          (posx 0)
          (posy 0)
          (l-aux (list)))
-   (print "entrou: cria-tabuleiro-novo")
+   ;(print "entrou: cria-tabuleiro-novo")
     (loop for linha from 0 to (- n-lin 1) do
           (loop for coluna from 0 to (- n-col 1) do
                 (setq l-aux (append l-aux (list NIL))))
@@ -571,7 +571,7 @@
          (posy 0)
          (p-aux)
          (l-aux (list)))
-    (print "entrou: cria-tabuleiro")
+    ;(print "entrou: cria-tabuleiro")
     (loop for linha in tabuleiro do
           (loop for coluna in linha do
                 (if (= coluna -1)
@@ -605,7 +605,7 @@
          (p-dir (nth (+ posx 1) (nth posy tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-dir)))
-    (print "entrou: ve-frente")
+    ;(print "entrou: ve-frente")
     (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
         (if (= -1 chave-b2)
             (progn
@@ -638,7 +638,6 @@
          (p-baixo (nth posx (nth (+ posy 1) tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-baixo)))
-    (print "entrou: ve-abaixo")
     (if (= (peca-cor p-aux) (peca-cor p-baixo))                                             ; Se o da frente for igual
         (if (= -1 chave-b2)
                 (progn
@@ -670,7 +669,7 @@
         ; (heuristica-opt	#'heur-menor-altura)
          resul solucao)
 
-    (print (print-hash h-blocos))
+    ;(print (print-hash h-blocos))
     (setf resul
           (cond ((string-equal algoritmo "melhor.abordagem")
                  (procura-tabuleiro estado-inicial (list #'gera-sucessores) heuristica1))

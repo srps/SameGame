@@ -157,7 +157,7 @@
                                                                   0 (third l-m2) 
                                                                   (no-n-linhas novo-estado) (no-n-colunas novo-estado) (no-h-blocos novo-estado))))
                   (maior-bloco novo-estado (no-h-blocos novo-estado))
-                  (setf (no-prof novo-estado) (+ (no-prof novo-estado) 1))
+                  (incf (no-prof novo-estado))
                   (push novo-estado lista)
             ))))
     lista))

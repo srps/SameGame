@@ -22,7 +22,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defconstant MAX-TEMPO 240) ;;Tempo limite de tempo para execução
+(defconstant MAX-TEMPO 5) ;;Tempo limite de tempo para execução
 
 
 
@@ -58,6 +58,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar *max-result* 0)
+(defvar tempo-inicio (get-internal-run-time))
 
 (defstruct peca
   pos                         ; posição da peça (x . y)
@@ -92,7 +93,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                               
 (defun objectivo? (estado)
-  (eq *max-result -1))
+ (time-to-stop? tempo-inicio MAX-TEMPO))
+
+;(eq *max-result -1))
 ;(eq (no-n-blocos estado) (no-n-pecas estado)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -166,7 +169,15 @@
 ;;	HEURISTICAS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;--------------------------------------------------------------------------;
+; Heuristica  que dá mais prioridade a nós com menos blocos                ;
+;--------------------------------------------------------------------------;
+; ARG1 - estado                                                            ;
+;--------------------------------------------------------------------------;
 
+
+(defun heuristica1 (estado)
+  (- 0 (no-maior-bloco estado)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	PROCURA
@@ -670,12 +681,13 @@
          resul solucao)
 
     ;(print (print-hash h-blocos))
+    (setf tempo-inicio (get-internal-run-time))
     (setf resul
           (cond ((string-equal algoritmo "melhor.abordagem")
                  (procura-tabuleiro estado-inicial (list #'gera-sucessores) heuristica1))
 
                 ((string-equal algoritmo "a*.melhor.heuristica")
-                 (setf solucao (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0)) "a*" :espaco-em-arvore? T)))
+                 (setf solucao (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristica1) "a*" :espaco-em-arvore? T)))
 
                 ((string-equal algoritmo "a*.melhor.heuristica.alternativa")
                  (procura-tabuleiro estado-inicial g-sucessores heuristica2))

@@ -78,6 +78,7 @@
 	
 (defstruct no
   (pontuacao 0	:type fixnum) ; Pontuação até ao momento do estado
+  (prof 0 :type fixnum)
   (n-pecas 0 :type fixnum)    ; Peças por eliminar
   (n-blocos 0 :type fixnum)   ; Blocos por eliminar         
   tabuleiro
@@ -156,6 +157,7 @@
                                                                   0 (third l-m2) 
                                                                   (no-n-linhas novo-estado) (no-n-colunas novo-estado) (no-h-blocos novo-estado))))
                   (maior-bloco novo-estado (no-h-blocos novo-estado))
+                  (setf (no-prof novo-estado) (+ (no-prof novo-estado) 1))
                   (push novo-estado lista)
             ))))
     lista))

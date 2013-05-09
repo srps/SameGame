@@ -142,7 +142,7 @@
          (nr-linhas (nos-n-linhas estado))
          (nr-colunas (nos-n-colunas estado))
          (lista()))
-    ;(print "SUCESSORES")
+    (print "SUCESSORES--------------------------------------------------------------------------------------------")
     ;(print (print-hash hash))
     (loop for key being the hash-keys of hash do     
           (let* ((novo-estado (copia-estado estado))
@@ -160,6 +160,10 @@
                                                                   0 (- (nos-n-linhas novo-estado) 1)
                                                                   (nos-n-linhas novo-estado) (nos-n-colunas novo-estado) (nos-h-blocos novo-estado))))
                   (maior-bloco novo-estado (nos-h-blocos novo-estado))
+                  (if (not (eq (gethash 223 (nos-h-blocos novo-estado)) nil))
+                      (progn
+                        (print "sucessor")
+                        (print (gethash 223 (nos-h-blocos novo-estado)))))
                   (incf (nos-prof novo-estado))
                   (push novo-estado lista)
             ))))
@@ -177,17 +181,31 @@
 ; ARG1 - estado                                                            ;
 ;--------------------------------------------------------------------------;
 
-
 (defun heuristica1 (estado)
   (- *tamanho-tabuleiro* (nos-maior-bloco estado)))
 
 
-;Heuristica que adapta a heuristica 1 
+;Heuristica que adapta a heuristica 1
 ;para conseguir funcionar com a*
-;dá mais importância aos estados que estão a maior profundidade         
+;dá mais importância aos estados que estão a maior profundidade
 (defun heuristica2 (estado)
-  (+ (* 144 (- 72 (nos-prof estado)))
-     (heuristica1 estado)))
+  (let* ((result 0))
+    (print (nos-pontuacao estado))
+    (print (nos-prof estado))
+    (print (nos-n-pecas estado))
+  ;(print (- 20000 (+ (* 144 (- 72 (nos-prof estado)))
+  ;                   (nos-pontuacao estado))))
+  ;(print (print-hash (nos-h-blocos estado)))
+    (if (= (nos-prof estado) 0)
+        (progn
+          (print "MEH")
+      (setf result (- 500 (nos-n-pecas estado))))
+      (setf result (+ (- 100 (nos-prof estado)) (* 10 (- *max-result* (nos-pontuacao estado))) (- *tamanho-tabuleiro* (nos-n-pecas estado)))))
+    (print "FUCK")
+  (if (< result 1)
+      (setf result 1))
+    (print result)
+    result))
 
 (defun heuristica3 (estado)
   (+ (* 144 (- 72 (nos-prof estado)))
@@ -325,6 +343,8 @@
 
 (defun remove-bloco (estado id-bloco ht)
   ;(print "entrou: remove-bloco")
+  (if (= id-bloco 223)
+      (print (gethash id-bloco ht)))
   (let* ((l-aux (bloco-lista-pecas (gethash id-bloco ht)))
          (pontos (expt (- (list-length l-aux) 2) 2))
          (pos))
@@ -356,10 +376,12 @@
          (bl-aux)
          (b-aux (make-bloco))
          (contador 0)
-         (resul (list x-ini x-fin y-ini)))                                                   ; Para evitar ver peças desnecessárias no lista-blocos
-    ;(print "entrou: gravidade")                                                              ; --Y min não interessa porque as peças caem 
-    (loop for coluna from 0 to (- (list-length (first tabuleiro)) 1) do
-          (loop for linha from (- (list-length tabuleiro) 1) downto 0 do
+         (resul (list x-ini x-fin y-ini)))                                                   
+    ;(print "entrou: gravidade")
+    (if (= (bloco-id bloco) 223)
+        (print bloco))
+    (loop for coluna from 0 to (- (list-length (first tabuleiro)) 1) do                      ; Para evitar ver peças desnecessárias no lista-blocos
+          (loop for linha from (- (list-length tabuleiro) 1) downto 0 do                     ; --Y min não interessa porque as peças caem
                 (setq p-aux (nth coluna (nth linha tabuleiro)))
                 (if (not (eq p-aux NIL))                                                     ; Se houver peça na posição indicada
                     (if (> contador 0)                                                       ; Se houver espaços vazios abaixo da peça
@@ -413,6 +435,8 @@
             (if (> contador 0)
                 (loop for linha from y-ini downto 0 do
                       (setq p-aux (nth coluna (nth linha tabuleiro)))
+                      (if (= (peca-bloco p-aux) 223)
+                          (print p-aux))
                       (if (not (eq p-aux NIL))                                                        ; Se houver peça na posição indicada
                           (progn
                             (setf (car (peca-pos p-aux)) (- (car (peca-pos p-aux)) contador))         ; Puxa a peça para a esquerda
@@ -459,6 +483,12 @@
 
 (defun junta-blocos (tabuleiro ht chave-b1 chave-b2)
   ;(print "entrei: junta-blocos")
+  (if (or (= chave-b1 223) (= chave-b2 223))
+      (progn
+        (print "b1")
+        (print (gethash chave-b1 ht))
+        (print "b2")
+        (print (gethash chave-b2 ht))))
   (let* ((b-aux (gethash chave-b1 ht))                                   ; Referência para o bloco que se vai manter
          (b-trash (gethash chave-b2 ht))                                 ; Referência para o bloco que vai à vida
          (l-aux (bloco-lista-pecas b-aux))                               ; Lista das peças do bloco que se vai manter
@@ -469,7 +499,7 @@
   (loop for p-pos in (bloco-lista-pecas b-trash) do
         (setf (peca-bloco (nth (car p-pos) (nth (cdr p-pos) tabuleiro)))
               chave-b1)                                                  ; Muda o bloco da peça
-        (push (cons (car p-pos) (cdr p-pos)) l-aux))                                   ; Insere a peça na lista do bloco original       
+        (push (cons (car p-pos) (cdr p-pos)) l-aux))                     ; Insere a peça na lista do bloco original       
   (setf (bloco-lista-pecas b-aux) l-aux)                                 ; Coloca a nova lista no bloco original
   (if (> (bloco-x-min b-aux) xmin)                                       ;;---------------------------------------------;
       (setf (bloco-x-min b-aux) xmin))                                   ;;                                             ;
@@ -481,6 +511,12 @@
       (setf (bloco-y-max b-aux) ymax))                                   ;;---------------------------------------------;
   (setf (gethash chave-b1 ht) b-aux)                                     ; Atualiza o bloco original na HT
   (remhash chave-b2 ht)
+  (if (or (= chave-b1 223) (= chave-b2 223))
+      (progn
+        (print "b1-exit")
+        (print (gethash chave-b1 ht))
+        (print "b2-exit")
+        (print (gethash chave-b2 ht))))
   ;(print "sai: junta-blocos")
 ))                                                ; Remove o 2º bloco da HT
 
@@ -521,9 +557,9 @@
                         (setf b-aux (gethash (peca-bloco p-aux) resul)))
                       (if (and (not (>= posx (- n-col 1)))                                                          ; Estou na última coluna do tabuleiro?
                                (not (eq (nth (+ posx 1) (nth posy tabuleiro)) nil)))                                ; A peça à frente existe?
-                            (ve-frente tabuleiro p-aux b-aux posx posy resul))                                      ; --Se não, verifica bloco à direita
+                          (ve-frente tabuleiro p-aux b-aux posx posy resul))                                        ; --Se não, verifica bloco à direita
                       (if (not (>= posy (- n-lin 1)))                                                               ; Estou na última linha do tabuleiro?                                       
-                            (ve-abaixo tabuleiro p-aux b-aux posx posy resul))))))
+                          (ve-abaixo tabuleiro p-aux b-aux posx posy resul))))))
     ;(print (print-hash hash))
     ;(print "sai: lista-blocos")
     resul))
@@ -603,6 +639,15 @@
          (p-dir (nth (+ posx 1) (nth posy tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-dir)))
+    (if (= (peca-bloco p-aux) 223)
+        (progn
+          (print "ve-frente")
+          (print p-aux)
+          (print p-dir)
+          (print (gethash (peca-bloco p-aux) ht))
+          (print chave-b1)
+          (print chave-b2)
+          (print "ve-frente-exit")))
     (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
         (if (= -1 chave-b2)
             (progn
@@ -618,6 +663,14 @@
                       (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
                   (junta-blocos tabuleiro ht chave-b1 chave-b2)
                 (junta-blocos tabuleiro ht chave-b2 chave-b1)))))
+    (if (= (peca-bloco p-aux) 223)
+        (progn
+          (print "sai: ve-frente")
+          (print chave-b1)
+          (print chave-b2)
+          (print (gethash chave-b1 ht))
+          (print (gethash chave-b2 ht))
+          (print "sai: ve-frente-exit")))
     ;(print (print-hash ht))
     ;(print "saiu: ve-frente")
 ))
@@ -637,10 +690,18 @@
 (defun ve-abaixo (tabuleiro p-aux b-aux posx posy ht)
   ;(print "entrou: ve-abaixo")
   ;(print (print-hash ht))
+  
   (let* ((l-aux (bloco-lista-pecas b-aux))
          (p-baixo (nth posx (nth (+ posy 1) tabuleiro)))
          (chave-b1 (peca-bloco p-aux))
          (chave-b2 (peca-bloco p-baixo)))
+    (if (= (peca-bloco p-aux) 223)
+        (progn
+          (print "ve-abaixo")
+          (print p-aux)
+          (print p-baixo)
+          (print (gethash (peca-bloco p-aux) ht))
+          (print "ve-abaixo-exit")))
     (if (= (peca-cor p-aux) (peca-cor p-baixo))                                             ; Se o da frente for igual
         (if (= -1 chave-b2)
                 (progn
@@ -651,11 +712,18 @@
                   (setf (bloco-lista-pecas (gethash chave-b1 ht)) l-aux)                    ; Atualiza o bloco na hash
                   (if (> (+ posy 1) (bloco-y-max (gethash chave-b1 ht)))                    ; Se a peça adicionada tiver y maior que o máximo do bloco
                       (setf (bloco-y-max (gethash chave-b1 ht)) (+ posy 1))))               ; --Incrementa o ymax do bloco 
-          (if (not (= chave-b1 chave-b2))        
-              (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
+          (if (not (= chave-b1 chave-b2))
+              (progn
+                (if (= chave-b1 223)
+                    (progn
+                      (print p-aux)
+                      (print "ve-abaixo-2")))
+                ;(print chave-b1)
+                ;(print (gethash chave-b1 ht))
+                (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
                       (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
                   (junta-blocos tabuleiro ht chave-b1 chave-b2)
-                (junta-blocos tabuleiro ht chave-b2 chave-b1)))))
+                (junta-blocos tabuleiro ht chave-b2 chave-b1))))))
     ;(print "saiu: ve-abaixo")
 ))
 
@@ -684,7 +752,7 @@
                  (procura-tabuleiro estado-inicial (list #'gera-sucessores) heuristica1))
 
                 ((string-equal algoritmo "a*.melhor.heuristica")
-                 (setf solucao (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristica1) "a*" :espaco-em-arvore? T)))
+                 (setf solucao (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristica2) "a*" :espaco-em-arvore? T)))
 
                 ((string-equal algoritmo "a*.melhor.heuristica.alternativa")
                  (procura-tabuleiro estado-inicial g-sucessores heuristica2))
@@ -694,7 +762,7 @@
 
                 ((string-equal algoritmo "abordagem.alternativa")
                  (setf solucao (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :estado= #'equal) 
-									"largura" :espaco-em-arvore? T))))                 ))
+									"profundidade" :espaco-em-arvore? T))))                 ))
     (print "FIM")
     (print *max-result*)
     (setf *max-result* 0)
@@ -710,8 +778,8 @@
 
 ;(print (resolve-same-game '((1 10 10 10 8) (1 2 1 1 1) (1 10 1 10 2) (1 1 1 10 10)) "a*.melhor.heuristica"))
 
-(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "a*.melhor.heuristica"))
+;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "abordagem.alternativa"))
 
 ;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "a*.melhor.heuristica"))
 
-;(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "abordagem.alternativa"))
+(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "abordagem.alternativa"))

@@ -12,17 +12,17 @@
 
 (eval-when (compile) (declaim (optimize (speed 3) (safety 0) (debug 0))))
 
-(declare (optimize (speed 3) (safety 0) (space 0)
-                   (debug 0) (compilation-speed 0)
-                   #+lispworks (float 0)
-                   #+lispworks (fixnum-safety 0)))
+;(declare (optimize (speed 3) (safety 0) (space 0)
+;                   (debug 0) (compilation-speed 0)
+;                   #+lispworks (float 0)
+;                   #+lispworks (fixnum-safety 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	DEFINICOES  DE CONSTANTES 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defconstant MAX-TEMPO 270) ;;Tempo limite de tempo para execução
+(defconstant MAX-TEMPO 200) ;;Tempo limite de tempo para execução
 
 
 
@@ -58,7 +58,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar *max-result* 0)
-(defvar tempo-inicio (get-internal-run-time))
+(defvar *tempo-inicial* (get-internal-run-time))
 (defvar *tamanho-tabuleiro* 0)
 
 
@@ -90,7 +90,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                               
 (defun objectivo? (estado)
- (time-to-stop? tempo-inicio MAX-TEMPO))
+ (time-to-stop? *tempo-inicial* MAX-TEMPO))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -192,18 +192,69 @@
 (defun heuristica3 (estado)
   (nos-n-pecas estado))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;	PROCURA
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;   SONDAGEM ITERATIVA   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;            
+                
 
-(defun procura-tabuleiro (estado sucessores heuristica)
-  ;(print (funcall #'gera-sucessores estado))
-  )
+                           
+	
+	
+;Algoritmo sondagem iterativa na perspectiva de optimização     
+(defun sondagem-iterativa-optimizacao (rbp-estado)
+                (let ((tempo-inicio (get-start-time))
+                                (melhor-solucao nil)
+                                (estado-solucao nil))
+                        (loop
+                                (if (time-to-stop? tempo-inicio MAX-TEMPO)
+                                        (return)
+                                  (progn  (setf estado-solucao (iteracao-sondagem-iterativa rbp-estado))
+                                    (if (objectivo? estado-solucao)
+                                        (progn
+                                          (if (null melhor-solucao)
+                                              (setf melhor-solucao estado-solucao)
+                                            (if (< (nos-pontuacao estado-solucao) (nos-pontuacao melhor-solucao))
+                                                (progn
+                                                  (setf melhor-solucao estado-solucao)))))))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;   SONDAGEM ITERATIVA   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;            
+                
+;recebe uma lista de sucessores não vazia
+;devolve um dos sucessores da lista, escolhido aleatóriamente           
+(defun escolhe-sucessor-random (lst-sucessores)
+        (let ((n-random (random (length lst-sucessores))))
+                (nth n-random lst-sucessores)))
 
+;faz uma iteracao de sondagem iteratica a partir do estado dado
+;devolve o ultimo estado que conseguiu chegar na iteracao
+(defun iteracao-sondagem-iterativa (estado)
+        (let ((lst-sucessores ()))
+                (if (objectivo? estado)
+                        estado
+                        (progn  (setf lst-sucessores (gera-sucessores estado))
+                                        (if (null lst-sucessores)
+                                                estado
+                                                (iteracao-sondagem-iterativa (escolhe-sucessor-random lst-sucessores)))))))                             
+	
 
-(defun procura-alternativa (estado sucessores heuristica))
+	
+;Algoritmo sondagem iterativa na perspectiva de optimização     
+(defun sondagem-iterativa (estado)
+                (let ((tempo-inicio (get-start-time))
+                                (melhor-solucao nil)
+                                (estado-solucao nil))
+                        (loop
+                                (if (time-to-stop? tempo-inicio MAX-TEMPO)
+                                    (return)
+                                  (progn  
+                                    (setf estado-solucao (iteracao-sondagem-iterativa estado))
+                                    (if (null melhor-solucao)
+                                        (setf melhor-solucao estado-solucao)
+                                      (if (< (nos-pontuacao estado-solucao) (nos-pontuacao melhor-solucao))
+                                            (setf melhor-solucao estado-solucao))))))))
 
 
 
@@ -676,49 +727,52 @@
          (tab-array (list-to-2d-array tab))
          (h-blocos (lista-blocos tab-array 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
          (estado-inicial (make-nos :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab-array :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0))
-         ;(b-aux (gethash 0 h-blocos))
-        ; (g-sucessores	#'gera-sucessores)
-        ; (heuristica1		#'heur-melhor-primeiro)
-        ; (heuristica2		#'heur-melhor-primeiro-posicao-menor)
-        ; (heuristica-opt	#'heur-menor-altura)
-         resul solucao)
+         resul)
     (setf *tamanho-tabuleiro* (*  (list-length (first problema)) (list-length problema)))
-    (print *tamanho-tabuleiro*)
+    (setf *tempo-inicial* (get-internal-run-time))
+     
 
-    (setf tempo-inicio (get-internal-run-time))
-    (setf resul
-          (cond ((string-equal algoritmo "melhor.abordagem")
+    (cond ((string-equal algoritmo "melhor.abordagem")
                  (procura-tabuleiro estado-inicial (list #'gera-sucessores) heuristica1))
 
                 ((string-equal algoritmo "a*.melhor.heuristica")
-                 (setf solucao (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristica2) "a*" :espaco-em-arvore? T))))
+                 (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristica2) "a*" :espaco-em-arvore? T)))
 
                 ((string-equal algoritmo "a*.melhor.heuristica.alternativa")
                  (procura-tabuleiro estado-inicial g-sucessores heuristica2))
 
                 ((string-equal algoritmo "sondagem.iterativa")
-                 (sondagem-iterativa estado-inicial))
+                 (time (sondagem-iterativa estado-inicial)))
 
                 ((string-equal algoritmo "abordagem.alternativa")
-                 (setf solucao (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :estado= #'equal) 
-									"profundidade" :espaco-em-arvore? T))))                 ))
+                 (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :estado= #'equal) 
+									"profundidade" :espaco-em-arvore? T)))
+
+
+                ;; Para efeitos de Teste. Não fazem parte das 5 estratégias pedidas
+                ((string-equal algoritmo "profundidade")
+                 (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :estado= #'equal) 
+									"profundidade" :espaco-em-arvore? T)))
+                
+                
+                ((string-equal algoritmo "largura")
+                 (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :estado= #'equal) 
+									"largura" :espaco-em-arvore? T)))
+                )
     (print "FIM")
-    (print *max-result*)
+    (setf resul *max-result*)
     (setf *max-result* 0)
     (setf tamanho-tabuleiro 0)
-    ;(setf solucao (converte-solucao solucao))
-
-  
-    solucao))
+  resul))
 
 ; S5
-;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "abordagem.alternativa"))
+(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "sondagem.iterativa"))
 
 ; S10
-;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "abordagem.alternativa"))
+;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "a*.melhor.heuristica"))
 
 ; S15
 ;(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "abordagem.alternativa"))
 
 ; S20
-(print (resolve-same-game '((5 1 1 1 2 1 4 2 1 2) (5 5 5 4 1 2 2 1 4 5) (5 5 3 5 5 3 1 5 4 3) (3 3 3 2 4 3 1 3 5 1) (5 3 4 2 2 2 2 1 3 1) (1 1 5 3 1 1 2 5 5 5) (4 2 5 1 4 5 4 1 1 1) (5 3 5 3 3 3 3 4 2 2) (2 3 3 2 5 4 3 4 4 4) (3 5 5 2 2 5 2 2 4 2) (1 4 2 3 2 4 5 5 4 2) (4 1 3 2 4 3 4 4 3 1) (3 1 3 4 4 1 5 1 5 4) (1 3 1 5 2 4 4 3 3 2) (4 2 4 2 2 5 3 1 2 1)) "abordagem.alternativa"))
+;(print (resolve-same-game '((5 1 1 1 2 1 4 2 1 2) (5 5 5 4 1 2 2 1 4 5) (5 5 3 5 5 3 1 5 4 3) (3 3 3 2 4 3 1 3 5 1) (5 3 4 2 2 2 2 1 3 1) (1 1 5 3 1 1 2 5 5 5) (4 2 5 1 4 5 4 1 1 1) (5 3 5 3 3 3 3 4 2 2) (2 3 3 2 5 4 3 4 4 4) (3 5 5 2 2 5 2 2 4 2) (1 4 2 3 2 4 5 5 4 2) (4 1 3 2 4 3 4 4 3 1) (3 1 3 4 4 1 5 1 5 4) (1 3 1 5 2 4 4 3 3 2) (4 2 4 2 2 5 3 1 2 1)) "abordagem.alternativa"))

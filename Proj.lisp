@@ -80,6 +80,7 @@
   (n-colunas 0 :type unsigned-byte)  ; Numero de colunas com peças
   (maior-bloco 0 :type unsigned-byte); Tamanho do maior bloco
   pecas-removidas
+  (h 0 :type unsigned-byte)
 )
 
 (defstruct result
@@ -161,6 +162,49 @@
                   (push novo-estado lista)
             ))))
     lista))
+
+;--------------------------------------------------------------------------;
+; Função que gera sucessores alternativa, com cortes                       ;
+;--------------------------------------------------------------------------;
+; ARG1 - estado                                                            ;
+;--------------------------------------------------------------------------;
+; RET  - Devolve a lista com os estados sucessores                         ;
+;--------------------------------------------------------------------------;
+
+(defun gera-sucessores-alternativo (estado)
+  ;(print "entrou: gera-sucessores")
+  (let* ((hash (nos-h-blocos estado))
+         (lista (list)))
+    (loop for key being the hash-keys of hash do     
+          (let* ((novo-estado (copia-estado estado))
+                 (b-aux (gethash key (nos-h-blocos novo-estado)))
+                 (tab (nos-tabuleiro novo-estado))
+                 (ht (nos-h-blocos novo-estado)))
+            (if (> (nos-prof novo-estado) *max-prof*)
+                (setf *max-prof* (nos-prof novo-estado)))
+            (if (>= (list-length (bloco-lista-pecas b-aux)) 2)
+                (progn                  
+                  (atualiza-tabuleiro tab ht)                  
+                  (remove-bloco novo-estado key ht)                  
+                  (let* ((l-margens
+                          (gravidade tab b-aux ht)))
+                    (encosta-esquerda novo-estado tab ht)
+                    (setf ht (lista-blocos tab 
+                                           0 (car l-margens) 
+                                           0 (cdr l-margens)
+                                           (nos-n-linhas novo-estado) (nos-n-colunas novo-estado) ht)))
+                  (maior-bloco novo-estado ht)
+                  (incf (nos-prof novo-estado))
+                  (setf (nos-h novo-estado) (funcall *heuristica* novo-estado))
+                  (push novo-estado lista)
+            ))))
+    (let* ((media 0)
+           (n-suc (list-length lista)))
+      (loop for suc in lista do
+          (incf media (nos-h suc)))
+      (if (not (zerop n-suc))
+          (setf media (/ media n-suc)))
+    (particiona-media lista media))))
   
 
 
@@ -205,7 +249,7 @@
 
 
 
-
+(defvar *heuristica* #'heuristicaPrincipal)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;   SONDAGEM ITERATIVA   ;;
@@ -242,13 +286,21 @@
                                    )))
 
 
-
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	FUNÇÔES AUXILIARES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;--------------------------------------------------------------------;
+; Função que transforma uma lista 2D num array 2D                    ;
+; -------------------------------------------------------------------;
+; ARG1 - numero de linhas                                            ;
+;--------------------------------------------------------------------;
+
+(defun particiona-sucessores (list int)
+  (declare (unsigned-byte media))
+           (loop for l in list
+                 if (<= (nos-h l) int)
+                 collect l))
 
 ;--------------------------------------------------------------------;
 ; Função que transforma uma lista 2D num array 2D                    ;
@@ -715,12 +767,12 @@
 ;;	FUNÇÂO PRINCIPAL
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 
+
 (defun resolve-same-game (problema algoritmo)
-  (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
-         (tab-array (list-to-2d-array tab))
-         (h-blocos (lista-blocos tab-array 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
-         (estado-inicial (make-nos :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab-array :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0)))
-    (setf *tamanho-tabuleiro* (*  (list-length (first problema)) (list-length problema)))
+  (let* ((tab-array (list-to-2d-array (cria-tabuleiro problema (list-length (first problema)))))
+         (h-blocos (lista-blocos tab-array 0 (- (array-dimension tab-array 1) 1) 0 (- (array-dimension tab-array 0) 1) (array-dimension tab-array 0) (array-dimension tab-array 1) (make-hash-table)))
+         (estado-inicial (make-nos :n-pecas (* (array-dimension tab-array 0) (array-dimension tab-array 1)) :n-blocos (hash-table-count h-blocos) :tabuleiro tab-array :h-blocos h-blocos :n-linhas (array-dimension tab-array 0) :n-colunas (array-dimension tab-array 1) :maior-bloco 0)))
+    (setf *tamanho-tabuleiro* (*  (array-dimension tab-array 1) (array-dimension tab-array 0)))
     (setf *tempo-inicial* (get-internal-run-time))
     (setf *result* (make-result))
 
@@ -737,8 +789,8 @@
                  (time (sondagem-iterativa estado-inicial)))
 
                 ((string-equal algoritmo "abordagem.alternativa")
-                 (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :estado= #'equal) 
-									"profundidade" :espaco-em-arvore? T)))
+                 (time (procura (cria-problema estado-inicial (list #'gera-sucessores-alternativo) :objectivo? #'objectivo? :estado= #'equal) 
+									"largura" :espaco-em-arvore? T)))
 
 
                 ;; Para efeitos de Teste. Não fazem parte das 5 estratégias pedidas
@@ -755,13 +807,13 @@
   *result*))
 
 ; S5
-;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "sondagem.iterativa"))
+;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "profundidade"))
 
 ; S10
-(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "sondagem.iterativa"))
+;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "a*.melhor.heuristica"))
 
 ; S15
-;(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "a*.melhor.heuristica"))
+(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "abordagem.alternativa"))
 
 ; S20
 ;(print (resolve-same-game '((5 1 1 1 2 1 4 2 1 2) (5 5 5 4 1 2 2 1 4 5) (5 5 3 5 5 3 1 5 4 3) (3 3 3 2 4 3 1 3 5 1) (5 3 4 2 2 2 2 1 3 1) (1 1 5 3 1 1 2 5 5 5) (4 2 5 1 4 5 4 1 1 1) (5 3 5 3 3 3 3 4 2 2) (2 3 3 2 5 4 3 4 4 4) (3 5 5 2 2 5 2 2 4 2) (1 4 2 3 2 4 5 5 4 2) (4 1 3 2 4 3 4 4 3 1) (3 1 3 4 4 1 5 1 5 4) (1 3 1 5 2 4 4 3 3 2) (4 2 4 2 2 5 3 1 2 1)) "a*.melhor.heuristica"))

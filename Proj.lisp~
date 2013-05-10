@@ -22,7 +22,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defconstant MAX-TEMPO 290) ;;Tempo limite de tempo para execução
+(defconstant MAX-TEMPO 30) ;;Tempo limite de tempo para execução
 
 
 
@@ -208,12 +208,13 @@
 ;faz uma iteracao de sondagem iteratica a partir do estado dado
 ;devolve o ultimo estado que conseguiu chegar na iteracao
 (defun iteracao-sondagem-iterativa (estado)
+  (print estado)
         (let ((lst-sucessores ()))
                 (if (objectivo? estado)
-                        estado
+                        (return-from iteracao-sondagem-iterativa)
                         (progn  (setf lst-sucessores (gera-sucessores estado))
                                         (if (null lst-sucessores)
-                                                estado
+                                                (return-from iteracao-sondagem-iterativa)
                                                 (iteracao-sondagem-iterativa (escolhe-sucessor-random lst-sucessores)))))))                             
 	
 
@@ -226,12 +227,8 @@
                         (loop
                                 (if (time-to-stop? tempo-inicio MAX-TEMPO)
                                     (return)
-                                  (progn  
-                                    (setf estado-solucao (iteracao-sondagem-iterativa estado))
-                                    (if (null melhor-solucao)
-                                        (setf melhor-solucao estado-solucao)
-                                      (if (< (nos-pontuacao estado-solucao) (nos-pontuacao melhor-solucao))
-                                            (setf melhor-solucao estado-solucao))))))))
+                                  (iteracao-sondagem-iterativa estado))
+                                   )))
 
 
 

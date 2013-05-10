@@ -22,7 +22,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defconstant MAX-TEMPO 200) ;;Tempo limite de tempo para execução
+(defconstant MAX-TEMPO 30) ;;Tempo limite de tempo para execução
 
 
 
@@ -193,30 +193,7 @@
   (nos-n-pecas estado))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;   SONDAGEM ITERATIVA   ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;            
-                
 
-                           
-	
-	
-;Algoritmo sondagem iterativa na perspectiva de optimização     
-(defun sondagem-iterativa-optimizacao (rbp-estado)
-                (let ((tempo-inicio (get-start-time))
-                                (melhor-solucao nil)
-                                (estado-solucao nil))
-                        (loop
-                                (if (time-to-stop? tempo-inicio MAX-TEMPO)
-                                        (return)
-                                  (progn  (setf estado-solucao (iteracao-sondagem-iterativa rbp-estado))
-                                    (if (objectivo? estado-solucao)
-                                        (progn
-                                          (if (null melhor-solucao)
-                                              (setf melhor-solucao estado-solucao)
-                                            (if (< (nos-pontuacao estado-solucao) (nos-pontuacao melhor-solucao))
-                                                (progn
-                                                  (setf melhor-solucao estado-solucao)))))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;   SONDAGEM ITERATIVA   ;;
@@ -233,10 +210,10 @@
 (defun iteracao-sondagem-iterativa (estado)
         (let ((lst-sucessores ()))
                 (if (objectivo? estado)
-                        estado
+                        (return-from iteracao-sondagem-iterativa)
                         (progn  (setf lst-sucessores (gera-sucessores estado))
                                         (if (null lst-sucessores)
-                                                estado
+                                                (return-from iteracao-sondagem-iterativa)
                                                 (iteracao-sondagem-iterativa (escolhe-sucessor-random lst-sucessores)))))))                             
 	
 
@@ -249,12 +226,8 @@
                         (loop
                                 (if (time-to-stop? tempo-inicio MAX-TEMPO)
                                     (return)
-                                  (progn  
-                                    (setf estado-solucao (iteracao-sondagem-iterativa estado))
-                                    (if (null melhor-solucao)
-                                        (setf melhor-solucao estado-solucao)
-                                      (if (< (nos-pontuacao estado-solucao) (nos-pontuacao melhor-solucao))
-                                            (setf melhor-solucao estado-solucao))))))))
+                                  (iteracao-sondagem-iterativa estado))
+                                   )))
 
 
 
@@ -766,13 +739,13 @@
   resul))
 
 ; S5
-(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "sondagem.iterativa"))
+;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "sondagem.iterativa"))
 
 ; S10
-;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "a*.melhor.heuristica"))
+;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "sondagem.iterativa"))
 
 ; S15
-;(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "abordagem.alternativa"))
+(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "sondagem.iterativa"))
 
 ; S20
 ;(print (resolve-same-game '((5 1 1 1 2 1 4 2 1 2) (5 5 5 4 1 2 2 1 4 5) (5 5 3 5 5 3 1 5 4 3) (3 3 3 2 4 3 1 3 5 1) (5 3 4 2 2 2 2 1 3 1) (1 1 5 3 1 1 2 5 5 5) (4 2 5 1 4 5 4 1 1 1) (5 3 5 3 3 3 3 4 2 2) (2 3 3 2 5 4 3 4 4 4) (3 5 5 2 2 5 2 2 4 2) (1 4 2 3 2 4 5 5 4 2) (4 1 3 2 4 3 4 4 3 1) (3 1 3 4 4 1 5 1 5 4) (1 3 1 5 2 4 4 3 3 2) (4 2 4 2 2 5 3 1 2 1)) "abordagem.alternativa"))

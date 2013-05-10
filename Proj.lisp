@@ -17,7 +17,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defconstant MAX-TEMPO 270) ;;Tempo limite de tempo para execução
+(defconstant MAX-TEMPO 280) ;;Tempo limite de tempo para execução
 
 
 

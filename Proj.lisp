@@ -196,11 +196,11 @@
 
 ;--------------------------------------------------------------------------;
 ; Heuristica  que dá mais prioridade a retirar blocos grandes              ;
-; Efectua uma procura em profundidade profundidade 
+; Efectua uma procura em profundidade                                      ; 
 ;--------------------------------------------------------------------------;
 ; ARG1 - estado                                                            ;
 ;--------------------------------------------------------------------------;
-(defun heuristicaMaiorBloco (estado)
+(defun heuristicaMenorTabuleiro (estado)
   (nos-n-pecas estado))
 
 

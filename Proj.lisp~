@@ -10,19 +10,14 @@
 
 (in-package :user)
 
-(eval-when (compile) (declaim (optimize (speed 3) (safety 0) (debug 0))))
 
-;(declare (optimize (speed 3) (safety 0) (space 0)
-;                   (debug 0) (compilation-speed 0)
-;                   #+lispworks (float 0)
-;                   #+lispworks (fixnum-safety 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	DEFINICOES  DE CONSTANTES 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defconstant MAX-TEMPO 30) ;;Tempo limite de tempo para execução
+(defconstant MAX-TEMPO 12) ;;Tempo limite de tempo para execução
 
 
 
@@ -60,6 +55,7 @@
 (defvar *max-result* 0)
 (defvar *tempo-inicial* (get-internal-run-time))
 (defvar *tamanho-tabuleiro* 0)
+(defvar *max-prof* 0)
 
 
 (defstruct bloco
@@ -140,6 +136,8 @@
                  (b-aux (gethash key (nos-h-blocos novo-estado)))
                  (tab (nos-tabuleiro novo-estado))
                  (ht (nos-h-blocos novo-estado)))
+            (if (> (nos-prof novo-estado) *max-prof*)
+                (setf *max-prof* (nos-prof novo-estado)))
             (if (>= (list-length (bloco-lista-pecas b-aux)) 2)
                 (progn                  
                   (atualiza-tabuleiro tab ht)                  
@@ -164,33 +162,39 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;--------------------------------------------------------------------------;
-; Heuristica  que dá mais prioridade a nós com menos blocos                ;
+; Heuristica  que dá mais prioridade a retirar peças pequenas               ;
 ;--------------------------------------------------------------------------;
 ; ARG1 - estado                                                            ;
 ;--------------------------------------------------------------------------;
 (defun heuristica1 (estado)
-  (- 500 (nos-n-pecas estado)))
+  (- *tamanho-tabuleiro* (nos-n-pecas estado)))
 
-
-;Heuristica que adapta a heuristica 1
-;para conseguir funcionar com a*
-;dá mais importância aos estados que estão a maior profundidade
+;--------------------------------------------------------------------------;
+; Heuristica  que dá mais prioridade peças com profundidade grande e com pontuação alta ;
+; Extensão da heuristica 1                                                 ;
+;--------------------------------------------------------------------------;
+; ARG1 - estado                                                            ;
+;--------------------------------------------------------------------------;
 (defun heuristica2 (estado)
   (let* ((result 0))
-  ;(print (- 20000 (+ (* 144 (- 72 (nos-prof estado)))
-  ;                   (nos-pontuacao estado))))
-  ;(print (print-hash (nos-h-blocos estado)))
-    (if (= (nos-prof estado) 0)
-        (progn
-          (heuristica1 estado))
-      (setf result (+ (- 100 (nos-prof estado)) (* 10 (- *max-result* (nos-pontuacao estado))) (heuristica1 estado))))
-  (if (< result 1)
-      (setf result 1))
+   ; (print *max-prof*)
+     ; (print (nos-prof estado))
+    (setf result (+ (* 150 (- *tamanho-tabuleiro* (nos-prof estado))) (* 50 (heuristica1 estado))))
+  ;  (if (< (nos-prof estado) 2)
+   ;     (progn
+    ;      (heuristica1 estado))
+     ; (setf result (+  (- *tamanho-tabuleiro* (nos-maior-bloco)) (* 10 (heuristica3 estado)))))
+    ;(* 30 (- (* *tamanho-tabuleiro* 100) (nos-pontuacao estado)))
+    (if (< result 0)
+        (setf result 0))
     ;(print result)
     result))
 
 (defun heuristica3 (estado)
   (nos-n-pecas estado))
+
+(defun heuristica4 (estado)
+  (- 100 (nos-prof estado)))
 
 
 
@@ -208,7 +212,6 @@
 ;faz uma iteracao de sondagem iteratica a partir do estado dado
 ;devolve o ultimo estado que conseguiu chegar na iteracao
 (defun iteracao-sondagem-iterativa (estado)
-  (print estado)
         (let ((lst-sucessores ()))
                 (if (objectivo? estado)
                         (return-from iteracao-sondagem-iterativa)
@@ -740,13 +743,13 @@
   resul))
 
 ; S5
-(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "sondagem.iterativa"))
+;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "sondagem.iterativa"))
 
 ; S10
-;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "a*.melhor.heuristica"))
+;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "sondagem.iterativa"))
 
 ; S15
-;(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "abordagem.alternativa"))
+(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "a*.melhor.heuristica"))
 
 ; S20
-;(print (resolve-same-game '((5 1 1 1 2 1 4 2 1 2) (5 5 5 4 1 2 2 1 4 5) (5 5 3 5 5 3 1 5 4 3) (3 3 3 2 4 3 1 3 5 1) (5 3 4 2 2 2 2 1 3 1) (1 1 5 3 1 1 2 5 5 5) (4 2 5 1 4 5 4 1 1 1) (5 3 5 3 3 3 3 4 2 2) (2 3 3 2 5 4 3 4 4 4) (3 5 5 2 2 5 2 2 4 2) (1 4 2 3 2 4 5 5 4 2) (4 1 3 2 4 3 4 4 3 1) (3 1 3 4 4 1 5 1 5 4) (1 3 1 5 2 4 4 3 3 2) (4 2 4 2 2 5 3 1 2 1)) "abordagem.alternativa"))
+;(print (resolve-same-game '((5 1 1 1 2 1 4 2 1 2) (5 5 5 4 1 2 2 1 4 5) (5 5 3 5 5 3 1 5 4 3) (3 3 3 2 4 3 1 3 5 1) (5 3 4 2 2 2 2 1 3 1) (1 1 5 3 1 1 2 5 5 5) (4 2 5 1 4 5 4 1 1 1) (5 3 5 3 3 3 3 4 2 2) (2 3 3 2 5 4 3 4 4 4) (3 5 5 2 2 5 2 2 4 2) (1 4 2 3 2 4 5 5 4 2) (4 1 3 2 4 3 4 4 3 1) (3 1 3 4 4 1 5 1 5 4) (1 3 1 5 2 4 4 3 3 2) (4 2 4 2 2 5 3 1 2 1)) "a*.melhor.heuristica"))

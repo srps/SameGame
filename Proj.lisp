@@ -10,19 +10,14 @@
 
 (in-package :user)
 
-(eval-when (compile) (declaim (optimize (speed 3) (safety 0) (debug 0))))
 
-;(declare (optimize (speed 3) (safety 0) (space 0)
-;                   (debug 0) (compilation-speed 0)
-;                   #+lispworks (float 0)
-;                   #+lispworks (fixnum-safety 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	DEFINICOES  DE CONSTANTES 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defconstant MAX-TEMPO 30) ;;Tempo limite de tempo para execução
+(defconstant MAX-TEMPO 0.1) ;;Tempo limite de tempo para execução
 
 
 
@@ -60,6 +55,7 @@
 (defvar *max-result* 0)
 (defvar *tempo-inicial* (get-internal-run-time))
 (defvar *tamanho-tabuleiro* 0)
+(defvar *max-prof* 0)
 
 
 (defstruct bloco
@@ -140,6 +136,8 @@
                  (b-aux (gethash key (nos-h-blocos novo-estado)))
                  (tab (nos-tabuleiro novo-estado))
                  (ht (nos-h-blocos novo-estado)))
+            (if (> (nos-prof novo-estado) *max-prof*)
+                (setf *max-prof* (nos-prof novo-estado)))
             (if (>= (list-length (bloco-lista-pecas b-aux)) 2)
                 (progn                  
                   (atualiza-tabuleiro tab ht)                  
@@ -164,33 +162,40 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;--------------------------------------------------------------------------;
-; Heuristica  que dá mais prioridade a nós com menos blocos                ;
+; Heuristica  que dá mais prioridade a retirar blocos pequenos             ;
 ;--------------------------------------------------------------------------;
 ; ARG1 - estado                                                            ;
 ;--------------------------------------------------------------------------;
-(defun heuristica1 (estado)
-  (- 500 (nos-n-pecas estado)))
+(defun heuristicaMenorBloco (estado)
+  (- *tamanho-tabuleiro* (nos-n-pecas estado)))
 
 
-;Heuristica que adapta a heuristica 1
-;para conseguir funcionar com a*
-;dá mais importância aos estados que estão a maior profundidade
-(defun heuristica2 (estado)
+;-------------------------------------------------------------------------------------------------------------------------------;
+; Extensão à  heuristicaMenorBloco que após certa profundidade dá prioridade a retirar blocos que maximizem a pontuação máxima  ;
+;-------------------------------------------------------------------------------------------------------------------------------;
+; ARG1 - estado                                                                                                                 ;
+;-------------------------------------------------------------------------------------------------------------------------------;
+(defun heuristicaPrincipal (estado)
   (let* ((result 0))
-  ;(print (- 20000 (+ (* 144 (- 72 (nos-prof estado)))
-  ;                   (nos-pontuacao estado))))
-  ;(print (print-hash (nos-h-blocos estado)))
-    (if (= (nos-prof estado) 0)
-        (progn
-          (heuristica1 estado))
-      (setf result (+ (- 100 (nos-prof estado)) (* 10 (- *max-result* (nos-pontuacao estado))) (heuristica1 estado))))
-  (if (< result 1)
-      (setf result 1))
-    ;(print result)
+    (if (and (> (nos-prof estado) 3)
+             (> (expt (- (nos-maior-bloco estado) 2) 2) *max-result*))
+        (setf result (- *tamanho-tabuleiro* (nos-maior-bloco estado)))
+      (setf result (+ (* 150 (- *tamanho-tabuleiro* (nos-prof estado))) (heuristicaMenorBloco estado))))
+    (if (< result 0)
+        (setf result 0))
     result))
 
-(defun heuristica3 (estado)
+
+
+;--------------------------------------------------------------------------;
+; Heuristica  que dá mais prioridade a retirar blocos grandes              ;
+; Efectua uma procura em profundidade profundidade 
+;--------------------------------------------------------------------------;
+; ARG1 - estado                                                            ;
+;--------------------------------------------------------------------------;
+(defun heuristicaMaiorBloco (estado)
   (nos-n-pecas estado))
+
 
 
 
@@ -709,7 +714,7 @@
                  (procura-tabuleiro estado-inicial (list #'gera-sucessores) heuristica1))
 
                 ((string-equal algoritmo "a*.melhor.heuristica")
-                 (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristica2) "a*" :espaco-em-arvore? T)))
+                 (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristicaPrincipal) "a*" :espaco-em-arvore? T)))
 
                 ((string-equal algoritmo "a*.melhor.heuristica.alternativa")
                  (procura-tabuleiro estado-inicial g-sucessores heuristica2))
@@ -745,7 +750,7 @@
 ;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "sondagem.iterativa"))
 
 ; S15
-(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "sondagem.iterativa"))
+(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "a*.melhor.heuristica"))
 
 ; S20
-;(print (resolve-same-game '((5 1 1 1 2 1 4 2 1 2) (5 5 5 4 1 2 2 1 4 5) (5 5 3 5 5 3 1 5 4 3) (3 3 3 2 4 3 1 3 5 1) (5 3 4 2 2 2 2 1 3 1) (1 1 5 3 1 1 2 5 5 5) (4 2 5 1 4 5 4 1 1 1) (5 3 5 3 3 3 3 4 2 2) (2 3 3 2 5 4 3 4 4 4) (3 5 5 2 2 5 2 2 4 2) (1 4 2 3 2 4 5 5 4 2) (4 1 3 2 4 3 4 4 3 1) (3 1 3 4 4 1 5 1 5 4) (1 3 1 5 2 4 4 3 3 2) (4 2 4 2 2 5 3 1 2 1)) "abordagem.alternativa"))
+;(print (resolve-same-game '((5 1 1 1 2 1 4 2 1 2) (5 5 5 4 1 2 2 1 4 5) (5 5 3 5 5 3 1 5 4 3) (3 3 3 2 4 3 1 3 5 1) (5 3 4 2 2 2 2 1 3 1) (1 1 5 3 1 1 2 5 5 5) (4 2 5 1 4 5 4 1 1 1) (5 3 5 3 3 3 3 4 2 2) (2 3 3 2 5 4 3 4 4 4) (3 5 5 2 2 5 2 2 4 2) (1 4 2 3 2 4 5 5 4 2) (4 1 3 2 4 3 4 4 3 1) (3 1 3 4 4 1 5 1 5 4) (1 3 1 5 2 4 4 3 3 2) (4 2 4 2 2 5 3 1 2 1)) "a*.melhor.heuristica"))

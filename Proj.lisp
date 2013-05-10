@@ -136,7 +136,6 @@
 ;--------------------------------------------------------------------------;
 
 (defun gera-sucessores (estado)
-  ;(print "entrou: gera-sucessores")
   (let* ((hash (nos-h-blocos estado))
          (lista (list)))
     (loop for key being the hash-keys of hash do     
@@ -172,7 +171,6 @@
 ;--------------------------------------------------------------------------;
 
 (defun gera-sucessores-alternativo (estado)
-  ;(print "entrou: gera-sucessores")
   (let* ((hash (nos-h-blocos estado))
          (lista (list)))
     (loop for key being the hash-keys of hash do     
@@ -198,13 +196,7 @@
                   (setf (nos-h novo-estado) (funcall *heuristica* novo-estado))
                   (push novo-estado lista)
             ))))
-    (let* ((media 0)
-           (n-suc (list-length lista)))
-      (loop for suc in lista do
-          (incf media (nos-h suc)))
-      (if (not (zerop n-suc))
-          (setf media (/ media n-suc)))
-    (particiona-media lista media))))
+    (particiona-sucessores (sort lista #'< :key #'nos-h) 1)))
   
 
 
@@ -298,9 +290,13 @@
 
 (defun particiona-sucessores (list int)
   (declare (unsigned-byte media))
-           (loop for l in list
-                 if (<= (nos-h l) int)
-                 collect l))
+  (let ((resul list))
+    (loop for l in list do
+          (if (zerop int)
+              (return-from particiona-sucessores resul)
+            (decf int))
+        (push l resul))
+    resul))
 
 ;--------------------------------------------------------------------;
 ; Função que transforma uma lista 2D num array 2D                    ;
@@ -333,8 +329,6 @@
 ;--------------------------------------------------------------------;
 
 (defun atualiza-tabuleiro (tabuleiro ht)
-  ;(print "entrou: atualiza-tabuleiro")
-  ;(print (print-hash ht))
   (loop for bl being the hash-values of ht do
         (loop for p-pos in (bloco-lista-pecas bl) do
               (setf (aref tabuleiro (cdr p-pos) (car p-pos)) 
@@ -347,7 +341,6 @@
 ;--------------------------------------------------------------------------;
 
 (defun copia-hash (hash)
-  ;(print "entrou: copia-hash")
   (let* ((new-hash (make-hash-table))
          (b-aux (make-bloco))
          (l-aux (list)))
@@ -388,7 +381,6 @@
 
 
 (defun copia-estado (estado)
-  ;(print "entrou: copia-estado")
   (let* ((pr-aux (list)))
   (loop for p-pos in (nos-pecas-removidas estado) do
                 (push (cons (car p-pos) (cdr p-pos)) pr-aux))  
@@ -414,7 +406,6 @@
 ;--------------------------------------------------------------------------;
 
 (defun maior-bloco (estado hash)
-  ;(print "entrou: maior-bloco")
   (let* ((result 0)
           (b-aux))
     (declare (unsigned-byte result tmp))
@@ -433,7 +424,6 @@
 ;--------------------------------------------------------------------------;
 
 (defun remove-bloco (estado id-bloco ht)
-  ;(print "entrou: remove-bloco")
   (declare (unsigned-byte id-bloco))
   (let* ((l-aux (bloco-lista-pecas (gethash id-bloco ht)))
          (pontos (expt (- (list-length l-aux) 2) 2)))
@@ -460,7 +450,6 @@
 ;--------------------------------------------------------------------------;
 
 (defun gravidade (tabuleiro bloco ht)
-  ;(print "entrei: gravidade")
   (let* ((x-ini (bloco-x-min bloco))
          (x-fin (bloco-x-max bloco))
          (y-ini (bloco-y-max bloco))
@@ -506,7 +495,6 @@
 
 
 (defun encosta-esquerda (estado tabuleiro ht)
-  ;(print "entrei: encosta-esquerda")
   (let* ((x-fin (- (array-dimension tabuleiro 1) 1))
          (y-ini (- (array-dimension tabuleiro 0) 1))
          (p-aux)
@@ -552,7 +540,6 @@
 ;----------------------------------------;
 
 (defun junta-blocos (tabuleiro ht chave-b1 chave-b2)
-  ;(print "entrei: junta-blocos")
   (declare (unsigned-byte chave-b1 chave-b2))
   (let* ((b-aux (gethash chave-b1 ht))                                   ; Referência para o bloco que se vai manter
          (b-trash (gethash chave-b2 ht))                                 ; Referência para o bloco que vai à vida
@@ -577,7 +564,6 @@
       (setf (bloco-y-max b-aux) ymax))                                   ;;---------------------------------------------;
   (setf (gethash chave-b1 ht) b-aux)                                     ; Atualiza o bloco original na HT
   (remhash chave-b2 ht)                                                  ; Remove o 2º bloco da HT  
-  ;(print "sai: junta-blocos")
 ))                                                
 
 
@@ -596,7 +582,6 @@
 ;---------------------------------------------;
 
 (defun lista-blocos (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col ht)
-  ;(print "entrou: lista-blocos")
   (declare (unsigned-byte x-ini x-fin y-ini y-fin n-lin n-col))
   (let* ((p-aux)
          (b-aux)
@@ -625,7 +610,6 @@
                           (ve-frente tabuleiro p-aux posx posy ht))                 ; --Se não, verifica bloco à direita
                       (if (not (>= posy (- n-lin 1)))                                        ; Estou na última linha do tabuleiro?                                       
                           (ve-abaixo tabuleiro p-aux posx posy ht))))))
-    ;(print "saiu: lista-blocos")
     ht))
  
 
@@ -645,7 +629,6 @@
   (declare (unsigned-byte n-lin n-col))
   (let* ((resul (list))
          (l-aux (list)))
-   ;(print "entrou: cria-tabuleiro-novo")
     (loop for linha from 0 to (- n-lin 1) do
           (loop for coluna from 0 to (- n-col 1) do
                 (setq l-aux (append l-aux (list NIL))))
@@ -669,7 +652,6 @@
          (p-aux)
          (l-aux (list)))
     (declare (unsigned-byte posx posy))
-    ;(print "entrou: cria-tabuleiro")
     (loop for linha in tabuleiro do
           (loop for coluna in linha do
                 (if (= coluna -1)
@@ -699,7 +681,6 @@
 
 (defun ve-frente (tabuleiro p-aux posx posy ht)
   (declare (unsigned-byte posx posy))
-  ;(print "entrou: ve-frente")
   (let* ((p-dir (aref tabuleiro posy (+ posx 1)))
          (chave-b1 (cdr p-aux))
          (l-aux (bloco-lista-pecas (gethash chave-b1 ht)))
@@ -719,8 +700,6 @@
                       (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
                   (junta-blocos tabuleiro ht chave-b1 chave-b2)
                 (junta-blocos tabuleiro ht chave-b2 chave-b1)))))
-    ;(print (print-hash ht))
-    ;(print "saiu: ve-frente")
 ))
 
 
@@ -735,8 +714,6 @@
 ;----------------------------------------------------------------------;
 
 (defun ve-abaixo (tabuleiro p-aux posx posy ht)
-  ;(print "entrou: ve-abaixo")
-  ;(print (print-hash ht)) 
   (declare (unsigned-byte posx posy))
   (let* ((p-baixo (aref tabuleiro (+ posy 1) posx))
          (chave-b1 (cdr p-aux))
@@ -753,13 +730,10 @@
               (if (> (+ posy 1) (bloco-y-max (gethash chave-b1 ht)))                    ; Se a peça adicionada tiver y maior que o máximo do bloco
                   (setf (bloco-y-max (gethash chave-b1 ht)) (+ posy 1))))               ; --Incrementa o ymax do bloco 
           (if (not (= chave-b1 chave-b2))
-                ;(print chave-b1)
-                ;(print (gethash chave-b1 ht))
               (if (>= (list-length (bloco-lista-pecas (gethash chave-b1 ht))) 
                       (list-length (bloco-lista-pecas (gethash chave-b2 ht))))
                   (junta-blocos tabuleiro ht chave-b1 chave-b2)
                 (junta-blocos tabuleiro ht chave-b2 chave-b1)))))
-    ;(print "saiu: ve-abaixo")
     ))
 
 

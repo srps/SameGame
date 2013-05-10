@@ -198,13 +198,7 @@
                   (setf (nos-h novo-estado) (funcall *heuristica* novo-estado))
                   (push novo-estado lista)
             ))))
-    (let* ((media 0)
-           (n-suc (list-length lista)))
-      (loop for suc in lista do
-          (incf media (nos-h suc)))
-      (if (not (zerop n-suc))
-          (setf media (/ media n-suc)))
-    (particiona-media lista media))))
+    (particiona-sucessores (sort lista #'< :key #'nos-h) 1)))
   
 
 
@@ -286,23 +280,25 @@
                                    )))
 
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;      PROCURA ALTERNATIVA
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;	FUNÇÔES AUXILIARES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;--------------------------------------------------------------------;
+; Função que transforma uma lista 2D num array 2D                    ;
+; -------------------------------------------------------------------;
+; ARG1 - numero de linhas                                            ;
+;--------------------------------------------------------------------;
 
-(defun particiona-media (list media)
+(defun particiona-sucessores (list int)
   (declare (unsigned-byte media))
-           (loop for l in list
-                 if (<= (nos-h l) media)
-                 collect l))
+  (let ((resul list))
+    (loop for l in list do
+          (if (zerop int)
+              (return-from particiona-sucessores resul)
+            (decf int))
+        (push l resul))
+    resul))
 
 ;--------------------------------------------------------------------;
 ; Função que transforma uma lista 2D num array 2D                    ;

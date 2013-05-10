@@ -1,4 +1,4 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;																	;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;			Procura e Planeamento 2012-2013                 ;;;
 ;;;			Projecto Same Game	                        ;;;
 ;;;									;;;
@@ -61,10 +61,6 @@
 (defvar tempo-inicio (get-internal-run-time))
 (defvar *tamanho-tabuleiro* 0)
 
-(defstruct peca
-  (cor -1 :type fixnum)       ; cor da peça
-  (bloco -1 :type fixnum)     ; bloco a que pertence a peça
-)
 
 (defstruct bloco
   (cor -1 :type fixnum)       ; cor do bloco
@@ -108,8 +104,8 @@
     (loop for posy from 0 to (- n-lin 1) do
           (loop for posx from 0 to (- n-col 1) do
                 (if (not (eq nil (nth posx (nth posy tabuleiro))))
-                (setq temp-list (append temp-list (list (peca-cor (nth posx (nth posy tabuleiro))))))
-                 (setq temp-list (append temp-list (list -1))))) ; Caso Não exista peça coloca -1
+                    (setq temp-list (append temp-list (list (car (nth posx (nth posy tabuleiro))))))
+                  (setq temp-list (append temp-list (list -1))))) ; Caso Não exista peça coloca -1
           (setq result (append result (list temp-list)))
           (setf temp-list '()))
   (print result)))
@@ -141,20 +137,21 @@
          (lista (list)))
     (loop for key being the hash-keys of hash do     
           (let* ((novo-estado (copia-estado estado))
-                 (b-aux (gethash key (nos-h-blocos novo-estado))))
+                 (b-aux (gethash key (nos-h-blocos novo-estado)))
+                 (tab (nos-tabuleiro novo-estado))
+                 (ht (nos-h-blocos novo-estado)))
             (if (>= (list-length (bloco-lista-pecas b-aux)) 2)
                 (progn
-                  (atualiza-tabuleiro (nos-tabuleiro novo-estado) (nos-h-blocos novo-estado))
-                  (remove-bloco novo-estado key (nos-h-blocos novo-estado))
+                  (atualiza-tabuleiro tab ht)
+                  (remove-bloco novo-estado key ht)
                   (let* ((l-margens
-                          (gravidade (nos-tabuleiro novo-estado) b-aux (nos-h-blocos novo-estado)))
-                         (l-m2 
-                          (encosta-esquerda novo-estado (nos-tabuleiro novo-estado) (nos-h-blocos novo-estado) l-margens)))
-                    (setf (nos-h-blocos novo-estado) (lista-blocos (nos-tabuleiro novo-estado) 
-                                                                  (first l-m2) (second l-m2) 
-                                                                  0 (third l-m2)
-                                                                  (nos-n-linhas novo-estado) (nos-n-colunas novo-estado) (nos-h-blocos novo-estado))))
-                  (maior-bloco novo-estado (nos-h-blocos novo-estado))
+                          (gravidade tab b-aux ht)))
+                    (encosta-esquerda novo-estado tab ht)
+                    (setf ht (lista-blocos tab 
+                                           0 (first l-margens) 
+                                           0 (second l-margens)
+                                           (nos-n-linhas novo-estado) (nos-n-colunas novo-estado) ht)))
+                  (maior-bloco novo-estado ht)
                   (incf (nos-prof novo-estado))
                   (push novo-estado lista)
             ))))
@@ -218,6 +215,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+(defun list-to-2d-array (list)
+  (make-array (list (length list)
+                    (length (first list)))
+              :initial-contents list))
+
+(defun 2d-array-to-list (array)
+  (loop for i below (array-dimension array 0)
+        collect (loop for j below (array-dimension array 1)
+                      collect (aref array i j))))
+
 ;;; A funcao delete do Common Lisp e' generica demais para o tipo de
 ;;; operacao que pretendemos aqui.
 ;;; Esta versao e' mais eficiente.
@@ -238,7 +245,7 @@
   (loop for bl being the hash-values of ht do
         (loop for p-pos in (bloco-lista-pecas bl) do
               (setf (nth (car p-pos) (nth (cdr p-pos) tabuleiro)) 
-                    (make-peca :cor (bloco-cor bl) :bloco (bloco-id bl))))))
+                    (cons (bloco-cor bl) (bloco-id bl))))))
 
 ;--------------------------------------------------------------------------;
 ; Função que cria uma hash table nova a partir de uma existente            ;
@@ -311,7 +318,6 @@
 (defun maior-bloco (estado hash)
   ;(print "entrou: maior-bloco")
   (let* ((result 0)
-         (tmp 0)
           (b-aux))
     (declare (unsigned-byte result tmp))
           (loop for key being the hash-keys of hash do
@@ -352,7 +358,6 @@
 ;--------------------------------------------------------------------------;
 
 (defun gravidade (tabuleiro bloco ht)
-  ;(print "entrou: gravidade")
   (let* ((x-ini (bloco-x-min bloco))
          (x-fin (bloco-x-max bloco))
          (y-ini (bloco-y-max bloco))
@@ -360,7 +365,7 @@
          (bl-aux)
          (b-aux (make-bloco))
          (contador 0)
-         (resul (list x-ini x-fin y-ini)))
+         (resul (list x-fin y-ini)))
     (declare (unsigned-byte x-ini x-fin y-ini x-fin y-ini contador))
     (loop for coluna from x-ini to x-fin do                      ; Para evitar ver peças desnecessárias no lista-blocos
           (loop for linha from y-ini downto 0 do                     ; --Y min não interessa porque as peças caem
@@ -368,22 +373,17 @@
                 (if (not (eq p-aux NIL))                                                     ; Se houver peça na posição indicada
                     (if (> contador 0)                                                       ; Se houver espaços vazios abaixo da peça
                         (progn                                                               ; --
-                          (setf bl-aux (peca-bloco p-aux))                                   ; -- Vê o bloco da peça que vai ser deslocada para baixo
+                          (setf bl-aux (cdr p-aux))                                          ; -- Vê o bloco da peça que vai ser deslocada para baixo
                           (if (not (= bl-aux -1))                                            ; -- Se existir (vai tratar do bloco) 
                               (progn                                                         ; ----
                                 (setf b-aux (gethash bl-aux ht))                             ; ---- Guarda o bloco para ser acedido facilmente
-                                (if (< (bloco-x-min b-aux) (first resul))                    ; ---- 
-                                    (if (<= (bloco-x-min b-aux) 0)                           ; ------
-                                        (setf (first resul) 0)                               ; ------
-                                      (setf (first resul) (- (bloco-x-min b-aux) 1))))       ; ------
-                                (if (> (bloco-x-max b-aux) (second resul))                   ; ----
-                                    (setf (second resul) (bloco-x-max b-aux)))               ; ------
-                                (if (> (bloco-y-max b-aux) (third resul))                    ; ----
-                                    (setf (third resul) (bloco-y-max b-aux)))                ; ------
+                                (if (> (bloco-x-max b-aux) (first resul))                   ; ----
+                                    (rplaca resul (bloco-x-max b-aux)))               ; ------
+                                (if (> (bloco-y-max b-aux) (second resul))                    ; ----
+                                    (rplacd resul (bloco-y-max b-aux)))                ; ------
                                 (loop for p-pos in (bloco-lista-pecas b-aux) do              ; ---- Para cada peça do bloco a ser removido
-                                      (setf (peca-bloco (nth (car p-pos) (nth (cdr p-pos) tabuleiro))) -1))   ; Remove o bloco das peças
+                                      (rplacd (nth (car p-pos) (nth (cdr p-pos) tabuleiro)) -1))   ; Remove o bloco das peças
                                 (remhash bl-aux ht)))                                                ; --Remove o bloco da hash
-                          ;(setf (cdr (peca-pos p-aux)) (+ (cdr (peca-pos p-aux)) contador))  ; Puxa a peça para baixo
                           (setf (nth coluna (nth linha tabuleiro)) NIL)                      ; Atualiza o tabuleiro
                           (setf (nth coluna (nth (+ linha contador) tabuleiro)) p-aux)))     ; Atualiza o tabuleiro
                   (incf contador)))                                                          ; Se for uma posição vazia, incrementa o contador
@@ -402,13 +402,10 @@
 ;---------------------------------------------------------------------------;
 
 
-(defun encosta-esquerda (estado tabuleiro ht l-margens)
-  ;(print "entrou: encosta-esquerda")
-  ;(print (print-hash ht))
+(defun encosta-esquerda (estado tabuleiro ht)
   (let* ((x-fin (- (list-length (first tabuleiro)) 1))
          (y-ini (- (list-length tabuleiro) 1))
          (p-aux)
-         (resul (list (first l-margens) (second l-margens) (third l-margens)))
          (contador 0))
     (declare (unsigned-byte x-fin y-ini contador))
     (loop for coluna from 0 to x-fin do
@@ -419,33 +416,24 @@
                       (setq p-aux (nth coluna (nth linha tabuleiro)))
                       (if (not (eq p-aux NIL))                                                        ; Se houver peça na posição indicada
                           (progn
-                            ;(setf (car (peca-pos p-aux)) (- (car (peca-pos p-aux)) contador))         ; Puxa a peça para a esquerda
                             (setf (nth coluna (nth linha tabuleiro)) NIL)                             ; Atualiza o tabuleiro
                             (setf (nth (- coluna contador) (nth linha tabuleiro)) p-aux)              ; Atualiza o tabuleiro
-                            (if (not (= (peca-bloco p-aux) -1))
+                            (if (not (= (cdr p-aux) -1))
                                 (progn
-                                  (let* ((b-aux (gethash (peca-bloco p-aux) ht))
+                                  (let* ((b-aux (gethash (cdr p-aux) ht))
                                          (l-aux (list)))
                                     (loop for p in (bloco-lista-pecas b-aux) do
                                           (if (equal p (cons coluna linha))
                                               (push (cons (- coluna contador) linha) l-aux)
-                                            (push p l-aux)))
-                                    ;(setf l-aux (delete-first-equal-from-list (cons coluna linha) l-aux))
-                                    ;(push (cons (- coluna contador) linha) l-aux)
-                                    (setf (bloco-lista-pecas (gethash (peca-bloco p-aux) ht)) l-aux)
+                                              (push p l-aux)))
+                                    (setf (bloco-lista-pecas (gethash (cdr p-aux) ht)) l-aux)
                                     (setq l-aux (list))
                                     (if (< (- coluna contador) (bloco-x-min b-aux))
-                                        (progn
-                                          (setf (bloco-x-min (gethash (peca-bloco p-aux) ht)) (- coluna contador))
-                                          (if (< (- coluna (+ contador 1)) (first l-margens))
-                                              (if (< (- coluna (+ contador 1)) 0)
-                                                  (setf (first resul) 0)
-                                                (setf (first resul) (- coluna (+ contador 1)))))))                                  
+                                        (setf (bloco-x-min (gethash (cdr p-aux) ht)) (- coluna contador)))                                  
                                     (if (>= coluna (bloco-x-max b-aux))
-                                        (setf (bloco-x-max (gethash (peca-bloco p-aux) ht)) (- coluna contador)))))))                       
+                                        (setf (bloco-x-max (gethash (cdr p-aux) ht)) (- coluna contador)))))))                       
                         (return))))))                                                                 ; Quando vê NIL, salta para a próxima coluna
-    (setf (nos-n-colunas estado) (- (nos-n-colunas estado) contador))
-    resul))      
+    (setf (nos-n-colunas estado) (- (nos-n-colunas estado) contador))))      
 
 
 
@@ -471,7 +459,7 @@
          (ymax (bloco-y-max b-trash)))                                   ; Y Máximo do bloco que vai à vida
     (declare (unsigned-byte xmin xmax ymin ymax))
   (loop for p-pos in (bloco-lista-pecas b-trash) do
-        (setf (peca-bloco (nth (car p-pos) (nth (cdr p-pos) tabuleiro)))
+        (rplacd (nth (car p-pos) (nth (cdr p-pos) tabuleiro))
               chave-b1)                                                  ; Muda o bloco da peça
         (push (cons (car p-pos) (cdr p-pos)) l-aux))                     ; Insere a peça na lista do bloco original       
   (setf (bloco-lista-pecas b-aux) l-aux)                                 ; Coloca a nova lista no bloco original
@@ -504,8 +492,6 @@
 ;---------------------------------------------;
 
 (defun lista-blocos (tabuleiro x-ini x-fin y-ini y-fin n-lin n-col ht)
-  ;(print "entrei: lista-blocos")
-  ;(print (print-hash hash))
   (declare (unsigned-byte x-ini x-fin y-ini y-fin n-lin n-col))
   (let* ((p-aux)
          (b-aux)
@@ -516,17 +502,17 @@
                 (if (not (eq (nth posx (nth posy tabuleiro)) nil))
                     (progn      
                       (setq p-aux (nth posx (nth posy tabuleiro)))
-                      (if (= (peca-bloco p-aux) -1)                                          ; Vê se a peça já está num bloco                          
+                      (if (= (cdr p-aux) -1)                                          ; Vê se a peça já está num bloco                          
                           (progn                                                             ; Se não estiver num bloco
-                            (setf (peca-bloco p-aux) contador)                               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                            (setq b-aux (make-bloco :cor (peca-cor p-aux)                    ;;
+                            (rplacd p-aux contador)                               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                            (setq b-aux (make-bloco :cor (car p-aux)                    ;;
                                                     :lista-pecas (list (cons posx posy))     ;;
                                                     :id contador                             ;;
                                                     :x-min posx                              ;;
                                                     :x-max posx                              ;;
                                                     :y-min posy                              ;;
                                                     :y-max posy))                            ;; Cria um bloco para a peça
-                            (setf (gethash (peca-bloco p-aux) ht) b-aux)                  ;; coloca-a no bloco
+                            (setf (gethash (cdr p-aux) ht) b-aux)                  ;; coloca-a no bloco
                             (setf (nth posx (nth posy tabuleiro)) p-aux)                     ;; e guarda o bloco para referência
                             (incf contador)))
                       (if (and (not (>= posx (- n-col 1)))                                   ; Estou na última coluna do tabuleiro?
@@ -534,8 +520,6 @@
                           (ve-frente tabuleiro p-aux posx posy ht))                 ; --Se não, verifica bloco à direita
                       (if (not (>= posy (- n-lin 1)))                                        ; Estou na última linha do tabuleiro?                                       
                           (ve-abaixo tabuleiro p-aux posx posy ht))))))
-    ;(print (print-hash hash))
-    ;(print "sai: lista-blocos")
     ht))
  
 
@@ -571,6 +555,11 @@
 ; ARG2 - numero de colunas                                           ;
 ;--------------------------------------------------------------------;
 
+(defun cria-tabuleiro-array (tabuleiro)
+  (loop for i below (array-dimension tabuleiro 0) do
+        (loop for j below (array-dimension tabuleiro 1) do
+              (setf (aref array i j) (cons (aref array i j) -1)))))
+
 (defun cria-tabuleiro (tabuleiro n-col)
   (declare (unsigned-byte n-col))
   (let* ((resul (list))
@@ -584,7 +573,7 @@
           (loop for coluna in linha do
                 (if (= coluna -1)
                     (setq p-aux nil)
-                  (setq p-aux (make-peca :cor coluna :bloco -1)))
+                  (setq p-aux (cons coluna -1)))
                 (setq l-aux (append l-aux (list p-aux)))
                 (if (not (= posx (- n-col 1)))                                       ; Avança no Y caso não esteja no final da linha
                     (incf posx)               
@@ -612,14 +601,14 @@
   (declare (unsigned-byte posx posy))
   ;(print "entrou: ve-frente")
   (let* ((p-dir (nth (+ posx 1) (nth posy tabuleiro)))
-         (chave-b1 (peca-bloco p-aux))
+         (chave-b1 (cdr p-aux))
          (l-aux (bloco-lista-pecas (gethash chave-b1 ht)))
-         (chave-b2 (peca-bloco p-dir)))
+         (chave-b2 (cdr p-dir)))
     (declare (unsigned-byte chave-b1 chave-b2))
-    (if (= (peca-cor p-aux) (peca-cor p-dir))                                         ; Se o da frente for igual
+    (if (= (car p-aux) (car p-dir))                                                   ; Se o da frente for igual
         (if (= -1 chave-b2)
             (progn
-              (setf (peca-bloco p-dir) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
+              (rplacd p-dir chave-b1)                                                 ; Junta a informação do bloco à peça da direita
               (setf (nth (+ posx 1) (nth posy tabuleiro)) p-dir)                      ; Coloca a peça atualizada no tabuleiro
               (push (cons (+ posx 1) posy) l-aux )                                    ; Adiciona a peça à lista para atualizar o bloco
               (setf (bloco-lista-pecas (gethash chave-b1 ht)) l-aux)                  ; Atualiza o bloco na hash
@@ -651,14 +640,14 @@
   ;(print (print-hash ht)) 
   (declare (unsigned-byte posx posy))
   (let* ((p-baixo (nth posx (nth (+ posy 1) tabuleiro)))
-         (chave-b1 (peca-bloco p-aux))
+         (chave-b1 (cdr p-aux))
          (l-aux (bloco-lista-pecas (gethash chave-b1 ht)))
-         (chave-b2 (peca-bloco p-baixo)))
+         (chave-b2 (cdr p-baixo)))
     (declare (unsigned-byte chave-b1 chave-b2))
-    (if (= (peca-cor p-aux) (peca-cor p-baixo))                                             ; Se o da frente for igual
+    (if (= (car p-aux) (car p-baixo))                                                   ; Se o da frente for igual
         (if (= -1 chave-b2)
             (progn             
-              (setf (peca-bloco p-baixo) (peca-bloco p-aux))                            ; Junta a informação do bloco à peça da direita
+              (rplacd p-baixo chave-b1)                                              ; Junta a informação do bloco à peça da direita
               (setf (nth posx (nth (+ posy 1) tabuleiro)) p-baixo)                      ; Coloca a peça atualizada no tabuleiro
               (push (cons posx (+ posy 1)) l-aux)                                       ; Adiciona a peça à lista para atualizar o bloco
               (setf (bloco-lista-pecas (gethash chave-b1 ht)) l-aux)                    ; Atualiza o bloco na hash
@@ -681,6 +670,7 @@
 
 (defun resolve-same-game (problema algoritmo)
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
+         (tab-array (list-to-2d-array tab))
          (h-blocos (lista-blocos tab 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
          (estado-inicial (make-nos :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0))
          ;(b-aux (gethash 0 h-blocos))
@@ -711,6 +701,7 @@
                  (setf solucao (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :estado= #'equal) 
 									"profundidade" :espaco-em-arvore? T))))                 ))
     (print "FIM")
+    (print tab-array)
     (print *max-result*)
     (setf *max-result* 0)
     (setf tamanho-tabuleiro 0)
@@ -719,8 +710,8 @@
   
     solucao))
 
-;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "a*.melhor.heuristica"))
+(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "abordagem.alternativa"))
 
 ;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "abordagem.alternativa"))
 
-(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "abordagem.alternativa"))
+;(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "abordagem.alternativa"))

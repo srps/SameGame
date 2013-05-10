@@ -17,7 +17,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defconstant MAX-TEMPO 0.1) ;;Tempo limite de tempo para execução
+(defconstant MAX-TEMPO 270) ;;Tempo limite de tempo para execução
 
 
 
@@ -52,10 +52,10 @@
 ;;	DEFINICOES  e  ESTRUTURAS  DE  DADOS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar *max-result* 0)
 (defvar *tempo-inicial* (get-internal-run-time))
 (defvar *tamanho-tabuleiro* 0)
 (defvar *max-prof* 0)
+(defvar *result*)
 
 
 (defstruct bloco
@@ -79,7 +79,14 @@
   (n-linhas 0 :type unsigned-byte)   ; Numero de linhas com peças
   (n-colunas 0 :type unsigned-byte)  ; Numero de colunas com peças
   (maior-bloco 0 :type unsigned-byte); Tamanho do maior bloco
+  pecas-removidas
 )
+
+(defstruct result
+  (pontuacao 0)
+  (pecas-removidas (list)))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                               
 ;;   FUNCAO ESTADO-OBJECTIVO   ;;
@@ -178,7 +185,7 @@
 (defun heuristicaPrincipal (estado)
   (let* ((result 0))
     (if (and (> (nos-prof estado) 3)
-             (> (expt (- (nos-maior-bloco estado) 2) 2) *max-result*))
+             (> (expt (- (nos-maior-bloco estado) 2) 2) (result-pontuacao *result*)))
         (setf result (- *tamanho-tabuleiro* (nos-maior-bloco estado)))
       (setf result (+ (* 150 (- *tamanho-tabuleiro* (nos-prof estado))) (heuristicaMenorBloco estado))))
     (if (< result 0)
@@ -330,6 +337,9 @@
 
 (defun copia-estado (estado)
   ;(print "entrou: copia-estado")
+  (let* ((pr-aux (list)))
+  (loop for p-pos in (nos-pecas-removidas estado) do
+                (push (cons (car p-pos) (cdr p-pos)) pr-aux))  
   (make-nos :tabuleiro (make-array (list (nos-n-linhas estado) (nos-n-colunas estado)))
             :h-blocos (copia-hash (nos-h-blocos estado))
             :prof (nos-prof estado)
@@ -338,7 +348,8 @@
             :n-blocos (nos-n-blocos estado)
             :n-linhas (nos-n-linhas estado)
             :n-colunas (nos-n-colunas estado)
-            :maior-bloco 0))
+            :maior-bloco 0
+            :pecas-removidas pr-aux)))
                                                                       
 
 
@@ -374,13 +385,17 @@
   (declare (unsigned-byte id-bloco))
   (let* ((l-aux (bloco-lista-pecas (gethash id-bloco ht)))
          (pontos (expt (- (list-length l-aux) 2) 2)))
+    (setf (nos-pecas-removidas estado) (push (first l-aux) (nos-pecas-removidas estado) ))
     (remhash id-bloco ht)
     (setf (nos-pontuacao estado) (+ (nos-pontuacao estado) pontos))
     (setf (nos-n-pecas estado) (- (nos-n-pecas estado) (list-length l-aux)))
     (loop for pos in l-aux do
           (setf (aref (nos-tabuleiro estado) (cdr pos) (car pos)) NIL))
-          (if (> (nos-pontuacao estado) *max-result*)
-              (setf *max-result* (nos-pontuacao estado)))))
+          (if (> (nos-pontuacao estado) (result-pontuacao *result*))
+              (progn
+                  (setf (result-pontuacao *result*) (nos-pontuacao estado))
+                  (setf (result-pecas-removidas *result*)(nos-pecas-removidas estado))
+                   ))))
 
 ;--------------------------------------------------------------------------;
 ; Função que faz cair as peças consoante as leis da gravidade              ;
@@ -704,11 +719,10 @@
   (let* ((tab (cria-tabuleiro problema (list-length (first problema))))
          (tab-array (list-to-2d-array tab))
          (h-blocos (lista-blocos tab-array 0 (- (list-length (first problema)) 1) 0 (- (list-length problema) 1) (list-length problema) (list-length (first problema)) (make-hash-table)))
-         (estado-inicial (make-nos :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab-array :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0))
-         resul)
+         (estado-inicial (make-nos :n-pecas (* (list-length problema) (list-length (first problema))) :n-blocos (hash-table-count h-blocos) :tabuleiro tab-array :h-blocos h-blocos :n-linhas (list-length problema) :n-colunas (list-length (first problema)) :maior-bloco 0)))
     (setf *tamanho-tabuleiro* (*  (list-length (first problema)) (list-length problema)))
     (setf *tempo-inicial* (get-internal-run-time))
-     
+    (setf *result* (make-result))
 
     (cond ((string-equal algoritmo "melhor.abordagem")
                  (procura-tabuleiro estado-inicial (list #'gera-sucessores) heuristica1))
@@ -738,13 +752,11 @@
 									"largura" :espaco-em-arvore? T)))
                 )
     (print "FIM")
-    (setf resul *max-result*)
-    (setf *max-result* 0)
     (setf tamanho-tabuleiro 0)
-  resul))
+  *result*))
 
 ; S5
-;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "sondagem.iterativa"))
+;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "a*.melhor.heuristica"))
 
 ; S10
 ;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "sondagem.iterativa"))

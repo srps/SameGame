@@ -17,7 +17,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defconstant MAX-TEMPO 12) ;;Tempo limite de tempo para execução
+(defconstant MAX-TEMPO 0.1) ;;Tempo limite de tempo para execução
 
 
 
@@ -162,39 +162,40 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;--------------------------------------------------------------------------;
-; Heuristica  que dá mais prioridade a retirar peças pequenas               ;
+; Heuristica  que dá mais prioridade a retirar blocos pequenos             ;
 ;--------------------------------------------------------------------------;
 ; ARG1 - estado                                                            ;
 ;--------------------------------------------------------------------------;
-(defun heuristica1 (estado)
+(defun heuristicaMenorBloco (estado)
   (- *tamanho-tabuleiro* (nos-n-pecas estado)))
 
+
+;-------------------------------------------------------------------------------------------------------------------------------;
+; Extensão à  heuristicaMenorBloco que após certa profundidade dá prioridade a retirar blocos que maximizem a pontuação máxima  ;
+;-------------------------------------------------------------------------------------------------------------------------------;
+; ARG1 - estado                                                                                                                 ;
+;-------------------------------------------------------------------------------------------------------------------------------;
+(defun heuristicaPrincipal (estado)
+  (let* ((result 0))
+    (if (and (> (nos-prof estado) 3)
+             (> (expt (- (nos-maior-bloco estado) 2) 2) *max-result*))
+        (setf result (- *tamanho-tabuleiro* (nos-maior-bloco estado)))
+      (setf result (+ (* 150 (- *tamanho-tabuleiro* (nos-prof estado))) (heuristicaMenorBloco estado))))
+    (if (< result 0)
+        (setf result 0))
+    result))
+
+
+
 ;--------------------------------------------------------------------------;
-; Heuristica  que dá mais prioridade peças com profundidade grande e com pontuação alta ;
-; Extensão da heuristica 1                                                 ;
+; Heuristica  que dá mais prioridade a retirar blocos grandes              ;
+; Efectua uma procura em profundidade profundidade 
 ;--------------------------------------------------------------------------;
 ; ARG1 - estado                                                            ;
 ;--------------------------------------------------------------------------;
-(defun heuristica2 (estado)
-  (let* ((result 0))
-   ; (print *max-prof*)
-     ; (print (nos-prof estado))
-    (setf result (+ (* 150 (- *tamanho-tabuleiro* (nos-prof estado))) (* 50 (heuristica1 estado))))
-  ;  (if (< (nos-prof estado) 2)
-   ;     (progn
-    ;      (heuristica1 estado))
-     ; (setf result (+  (- *tamanho-tabuleiro* (nos-maior-bloco)) (* 10 (heuristica3 estado)))))
-    ;(* 30 (- (* *tamanho-tabuleiro* 100) (nos-pontuacao estado)))
-    (if (< result 0)
-        (setf result 0))
-    ;(print result)
-    result))
-
-(defun heuristica3 (estado)
+(defun heuristicaMaiorBloco (estado)
   (nos-n-pecas estado))
 
-(defun heuristica4 (estado)
-  (- 100 (nos-prof estado)))
 
 
 
@@ -713,7 +714,7 @@
                  (procura-tabuleiro estado-inicial (list #'gera-sucessores) heuristica1))
 
                 ((string-equal algoritmo "a*.melhor.heuristica")
-                 (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristica2) "a*" :espaco-em-arvore? T)))
+                 (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristicaPrincipal) "a*" :espaco-em-arvore? T)))
 
                 ((string-equal algoritmo "a*.melhor.heuristica.alternativa")
                  (procura-tabuleiro estado-inicial g-sucessores heuristica2))

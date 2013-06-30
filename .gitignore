@@ -167,3 +167,5 @@ Proj.lisp~
 *.ofasl
 *.lib
 *.fas
+*.fasl
+*.lib

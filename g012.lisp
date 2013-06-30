@@ -331,7 +331,7 @@
 (defun atualiza-tabuleiro (tabuleiro ht)
   (loop for bl being the hash-values of ht do
         (loop for p-pos in (bloco-lista-pecas bl) do
-              (setf (aref tabuleiro (cdr p-pos) (car p-pos)) 
+              (setf (aref tabuleiro (car p-pos) (cdr p-pos)) 
                     (cons (bloco-cor bl) (bloco-id bl))))))
 
 ;--------------------------------------------------------------------------;
@@ -383,7 +383,8 @@
 (defun copia-estado (estado)
   (let* ((pr-aux (list)))
   (loop for p-pos in (nos-pecas-removidas estado) do
-                (push (cons (car p-pos) (cdr p-pos)) pr-aux))  
+                (push (cons (car p-pos) (cdr p-pos)) pr-aux))
+  (setf pr-aux (reverse pr-aux)) 
   (make-nos :tabuleiro (make-array (list (nos-n-linhas estado) (nos-n-colunas estado)))
             :h-blocos (copia-hash (nos-h-blocos estado))
             :prof (nos-prof estado)
@@ -427,12 +428,12 @@
   (declare (unsigned-byte id-bloco))
   (let* ((l-aux (bloco-lista-pecas (gethash id-bloco ht)))
          (pontos (expt (- (list-length l-aux) 2) 2)))
-    (setf (nos-pecas-removidas estado) (push (first l-aux) (nos-pecas-removidas estado) ))
+    (setf (nos-pecas-removidas estado) (nconc (nos-pecas-removidas estado) (list (first l-aux))))
     (remhash id-bloco ht)
     (setf (nos-pontuacao estado) (+ (nos-pontuacao estado) pontos))
     (setf (nos-n-pecas estado) (- (nos-n-pecas estado) (list-length l-aux)))
     (loop for pos in l-aux do
-          (setf (aref (nos-tabuleiro estado) (cdr pos) (car pos)) NIL))
+          (setf (aref (nos-tabuleiro estado) (car pos) (cdr pos)) NIL))
           (if (> (nos-pontuacao estado) (result-pontuacao *result*))
               (progn
                   (setf (result-pontuacao *result*) (nos-pontuacao estado))
@@ -474,7 +475,7 @@
                                 (if (> (bloco-y-max b-aux) (cdr resul))                    ; ----
                                       (setf (cdr resul) (bloco-y-max b-aux)))                ; ------
                                 (loop for p-pos in (bloco-lista-pecas b-aux) do              ; ---- Para cada peça do bloco a ser removido
-                                      (rplacd (aref tabuleiro (cdr p-pos) (car p-pos)) -1))   ; Remove o bloco das peças
+                                      (rplacd (aref tabuleiro (car p-pos) (cdr p-pos)) -1))   ; Remove o bloco das peças
                                 (remhash bl-aux ht)))                                                ; --Remove o bloco da hash
                           (setf (aref tabuleiro linha coluna) NIL)                      ; Atualiza o tabuleiro
                           (setf (aref tabuleiro (+ linha contador) coluna) p-aux)))     ; Atualiza o tabuleiro
@@ -515,8 +516,8 @@
                                   (let* ((b-aux (gethash (cdr p-aux) ht))
                                          (l-aux (list)))
                                     (loop for p in (bloco-lista-pecas b-aux) do
-                                          (if (equal p (cons coluna linha))
-                                              (push (cons (- coluna contador) linha) l-aux)
+                                          (if (equal p (cons linha coluna))
+                                              (push (cons linha (- coluna contador)) l-aux)
                                               (push p l-aux)))
                                     (setf (bloco-lista-pecas (gethash (cdr p-aux) ht)) l-aux)
                                     (setq l-aux (list))
@@ -550,7 +551,7 @@
          (ymax (bloco-y-max b-trash)))                                   ; Y Máximo do bloco que vai à vida
     (declare (unsigned-byte xmin xmax ymin ymax))
   (loop for p-pos in (bloco-lista-pecas b-trash) do
-        (rplacd (aref tabuleiro (cdr p-pos) (car p-pos))
+        (rplacd (aref tabuleiro (car p-pos) (cdr p-pos))
               chave-b1)                                                  ; Muda o bloco da peça
         (push (cons (car p-pos) (cdr p-pos)) l-aux))                     ; Insere a peça na lista do bloco original       
   (setf (bloco-lista-pecas b-aux) l-aux)                                 ; Coloca a nova lista no bloco original
@@ -596,7 +597,7 @@
                           (progn                                                             ; Se não estiver num bloco
                             (rplacd p-aux contador)                               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                             (setq b-aux (make-bloco :cor (car p-aux)                    ;;
-                                                    :lista-pecas (list (cons posx posy))     ;;
+                                                    :lista-pecas (list (cons posy posx))     ;;
                                                     :id contador                             ;;
                                                     :x-min posx                              ;;
                                                     :x-max posx                              ;;
@@ -691,7 +692,7 @@
             (progn
               (rplacd p-dir chave-b1)                                                 ; Junta a informação do bloco à peça da direita
               (setf (aref tabuleiro posy (+ posx 1)) p-dir)                      ; Coloca a peça atualizada no tabuleiro
-              (push (cons (+ posx 1) posy) l-aux )                                    ; Adiciona a peça à lista para atualizar o bloco
+              (push (cons posy (+ posx 1)) l-aux )                                    ; Adiciona a peça à lista para atualizar o bloco
               (setf (bloco-lista-pecas (gethash chave-b1 ht)) l-aux)                  ; Atualiza o bloco na hash
               (if (> (+ posx 1) (bloco-x-max (gethash chave-b1 ht)))                  ; Se a peça adicionada tiver x maior que o máximo do bloco
                   (setf (bloco-x-max (gethash chave-b1 ht)) (+ posx 1))))             ; --Incrementa o xmax do bloco     
@@ -725,7 +726,7 @@
             (progn             
               (rplacd p-baixo chave-b1)                                              ; Junta a informação do bloco à peça da direita
               (setf (aref tabuleiro (+ posy 1) posx) p-baixo)                      ; Coloca a peça atualizada no tabuleiro
-              (push (cons posx (+ posy 1)) l-aux)                                       ; Adiciona a peça à lista para atualizar o bloco
+              (push (cons (+ posy 1) posx ) l-aux)                                       ; Adiciona a peça à lista para atualizar o bloco
               (setf (bloco-lista-pecas (gethash chave-b1 ht)) l-aux)                    ; Atualiza o bloco na hash
               (if (> (+ posy 1) (bloco-y-max (gethash chave-b1 ht)))                    ; Se a peça adicionada tiver y maior que o máximo do bloco
                   (setf (bloco-y-max (gethash chave-b1 ht)) (+ posy 1))))               ; --Incrementa o ymax do bloco 
@@ -751,7 +752,7 @@
     (setf *result* (make-result))
 
     (cond ((string-equal algoritmo "melhor.abordagem")
-                 (procura-tabuleiro estado-inicial (list #'gera-sucessores) heuristica1))
+                 (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristicaPrincipal) "a*" :espaco-em-arvore? T)))
 
                 ((string-equal algoritmo "a*.melhor.heuristica")
                  (time (procura (cria-problema estado-inicial (list #'gera-sucessores) :objectivo? #'objectivo? :custo (always 0) :heuristica #'heuristicaPrincipal) "a*" :espaco-em-arvore? T)))
@@ -780,14 +781,4 @@
     (setf tamanho-tabuleiro 0)
   *result*))
 
-; S5
-;(print (resolve-same-game '((2 1 3 2 3 3 2 3 3 3) (1 3 2 2 1 3 3 2 2 2) (1 3 1 3 2 2 2 1 2 1) (1 3 3 3 1 3 1 1 1 3)) "profundidade"))
-
-; S10
-;(print (resolve-same-game '((4 3 3 1 2 5 1 2 1 5) (2 4 4 4 1 5 2 4 1 2) (5 2 4 1 4 5 1 2 5 4) (1 3 1 4 2 5 2 5 4 5)) "a*.melhor.heuristica"))
-
-; S15
-(print (resolve-same-game '((3 3 3 2 1 2 3 1 3 1) (1 1 2 3 3 1 1 1 3 1) (3 3 1 2 1 1 3 2 1 1) (3 3 2 3 3 1 3 3 2 2) (3 2 2 2 3 3 2 1 2 2) (3 1 2 2 2 2 1 2 1 3) (2 3 2 1 2 1 1 2 2 1) (2 2 3 1 1 1 3 2 1 3) (1 3 3 1 1 2 3 1 3 1) (2 1 2 2 1 3 1 1 2 3) (2 1 1 3 3 3 1 2 3 1) (1 2 1 1 3 2 2 1 2 2) (2 1 3 2 1 2 1 3 2 3) (1 2 1 3 1 2 2 3 2 3) (3 3 1 2 3 1 1 2 3 1)) "abordagem.alternativa"))
-
-; S20
-;(print (resolve-same-game '((5 1 1 1 2 1 4 2 1 2) (5 5 5 4 1 2 2 1 4 5) (5 5 3 5 5 3 1 5 4 3) (3 3 3 2 4 3 1 3 5 1) (5 3 4 2 2 2 2 1 3 1) (1 1 5 3 1 1 2 5 5 5) (4 2 5 1 4 5 4 1 1 1) (5 3 5 3 3 3 3 4 2 2) (2 3 3 2 5 4 3 4 4 4) (3 5 5 2 2 5 2 2 4 2) (1 4 2 3 2 4 5 5 4 2) (4 1 3 2 4 3 4 4 3 1) (3 1 3 4 4 1 5 1 5 4) (1 3 1 5 2 4 4 3 3 2) (4 2 4 2 2 5 3 1 2 1)) "a*.melhor.heuristica"))
+;(print (resolve-same-game '((1 1 5 3) (5 3 5 3) (1 2 5 4) (5 2 1 4) (5 3 5 1) (5 3 4 4) (5 5 2 5) (1 1 3 1) (1 2 1 3) (3 3 5 5)) "melhor.abordagem"))
